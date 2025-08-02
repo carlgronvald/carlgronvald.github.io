@@ -10,6 +10,16 @@ src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"> </script></p>
  <div style="flex:1;margin:10px;text-align:right" class="btwn-link">
  </div>
 </div></p>
+<h4>TLDR</h4>
+
+<p><ul>
+  <li>This post is about online regression in varying feature spaces</li>
+  <li>We construct two models for this use case, OLM and OLM-S</li>
+  <li>We compare to current literature on online classification in varying feature space</li>
+  <li>And then move on to regression</li>
+  <li>We do all this so we can use it in my next post (COMING SOON) to construct online regression markets in varying feature spaces</li>
+</ul></p>
+<p><br/></p>
 <p>Hi! I originally started writing this blog post while I was writing my thesis.
 However, writing a thesis turned out to take a lot of time and effort - and
 somehow, one more writing project was not the highest on my list. Now, I handed
@@ -60,20 +70,20 @@ OCDS algorithm myself, so that I could compare its results to my own.</p>
 
 <p>As I started implementing OCDS, I ran into some confusion with the data in the
 original OCDS paper. I also didn't manage to reproduce the results of that
-paper despite several attempts. I don't have any good explanations for why this
-happened, and unfortunately the authors of the OCDS paper could not share the
-code that generated their results since it was undergoing a patenting process.
-Therefore, I skipped on using OCDS and only compared to its results. I only
-discuss this slightly more in the results section, but if anyone involved in
-OCDS wants to tell me what's going on, that would be super welcome :)</p>
+paper despite several attempts. Unfortunately the authors of the OCDS paper
+could not share the code that generated their results since it was undergoing a
+patenting process. Therefore, I skipped on using OCDS and only compared to its
+results. I only discuss this slightly more in the results section, but if
+anyone involved in OCDS wants to tell me what's going on, that would be super
+welcome :)</p>
 <h1>my own models</h1>
 <p>As I realized I couldn't use OCDS, I decided to implement some models of my
 own. I developed two models, and they are both based on pretty simple concepts.
 Both are essentially based on linear regression.</p>
 <p>Linear regression is essentially an optimization problem; we have a set of
-observations X and a set of targets y, and we're then looking for the coefficients a
-that gets the value of \(AX\) as close as possible to \(y\), measured by
-the square difference. Mathematically, this can be expressed as</p>
+observations X and a set of targets y, and we're then looking for the
+coefficients a that gets the value of \(AX\) as close as possible to \(y\),
+measured by the square difference. Mathematically, this can be expressed as</p>
 <p>$$
   \underset{a}{min} \sum_i^N (a \cdot x_i - y_i)^2
 $$</p>
@@ -429,7 +439,10 @@ convex methods. This is why non-convex online
 regressors such as <a href="https://arxiv.org/abs/1406.2673" target="_blank">Mondrian
 forests</a> were
 excluded.</p>
-
+<p>From a computational complexity point-of-view, OLM computationally is linear in
+the number of features it sees \(n\), so of \(O(n) \), and OLM-S is quadratic,
+\(O(n^2) \). OCDS, on the other hand, has a cubed runtime \(O(n^3) \) in the
+general case, but has some optimizations to limit this in practice.</p>
 <h1>conclusion</h1>
 
 <p>Okay, now we've established some models that we can use for regression in an
