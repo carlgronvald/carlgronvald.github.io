@@ -14,8 +14,10 @@ src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"> </script></p>
 However, writing a thesis turned out to take a lot of time and effort - and
 somehow, one more writing project was not the highest on my list. Now, I handed
 in my thesis and took the time I needed away from the project.</p>
-<p>My thesis was about online regression markets with varying feature spaces. That
-sounds complicated but let's break down those words, ordered by importance:</p>
+<p>My thesis was titled "Online regression markets with varying feature space". In
+one sentence, it concerns trading data using the regression market approach in
+situations where the available set of features changes over time. That sounds
+complicated but let's break down the keywords, ordered by importance:</p>
 <p><ol>
   <li><b>Markets </b>- people are trading something, in this case they are trading <i>data</i> for use in regressions
 </li>
@@ -23,7 +25,7 @@ sounds complicated but let's break down those words, ordered by importance:</p>
   <li><b>Online </b>- Referring to the fact that we're using online regression, which is regression where
     the regressor is continuously updated as new information becomes available (see my <a href="2024-02-18-online-learning.html" target="_blank">last blog
     post</a>)</li>
-  <li><b>Varying feature spaces</b> - Usually regression is done on a fixed ste of features. In my
+  <li><b>Varying feature spaces</b> - Usually regression is done on a fixed set of features. In my
   thesis, however, I let the set of features change over time, with several implications
   regarding both markets and regression problems. </li>
 </ol></p>
@@ -34,7 +36,7 @@ features over time turns out to already have a name in literature, known as <i>U
 Learning</i>.</p>
 <h1>utilitarian online learning</h1>
 <p>Utilitarian Online Learning is a term first coined in a survey article from 2023<sup id="ref-home-3"><a href="#ref-3">3</a></sup>. It
-refers to any kind of machine learning that fulfills three criteria:
+refers to machine learning that fulfills three criteria:
 <ol>
   <li>It's online - The model is updated continuously as new data becomes available </li>
   <li>It natively handles varying feature spaces, i.e. it works just fine if the set of features
@@ -55,12 +57,15 @@ from the paper He et al. (2019)<sup id="ref-home-4"><a href="#ref-4">4</a></sup>
 converted to a regression mechanism, if needed. I then tried implementing the
 OCDS algorithm myself, so that I could compare its results to my own.</p>
 <h1>issues with OCDS</h1>
+
 <p>As I started implementing OCDS, I ran into some confusion with the data in the
-original OCDS paper. I also could not reconstruct the performance that this
-original paper achieved. I don't have any good explanations for why this
+original OCDS paper. I also didn't manage to reproduce the results of that
+paper despite several attempts. I don't have any good explanations for why this
 happened, and unfortunately the authors of the OCDS paper could not share the
 code that generated their results since it was undergoing a patenting process.
-Therefore, I skipped on using OCDS and only compared to its results. I only discuss this slightly more in the results section, but if anyone involved in OCDS wants to tell me what's going on, that would be super welcome :)</p>
+Therefore, I skipped on using OCDS and only compared to its results. I only
+discuss this slightly more in the results section, but if anyone involved in
+OCDS wants to tell me what's going on, that would be super welcome :)</p>
 <h1>my own models</h1>
 <p>As I realized I couldn't use OCDS, I decided to implement some models of my
 own. I developed two models, and they are both based on pretty simple concepts.
@@ -138,26 +143,17 @@ $$</p>
 $$</p>
 <p>This gives us a linear regression model that
 we can use in an online fashion, i.e. updating
-it every time we get new observations. It
-doesn't get us all the way to the Online
-Linear Model, though, since it also must
-handle missing features. </p>
-<p>Usually when performing regression, we'll
-normalize our features so that they have a
-mean of zero. This mean is also the expected
-value of any feature absent of other
-information. When a feature is missing, the
-simplest way to handle it is to assume that
-the feature has the value of its mean, known
-as mean imputation. Then, if we always
-normalize input features for this model, we
-can just set missing features to zero. This
-actually means that they straight up disappear
-from the calculation - both the term in the
-sum determining \(\hat y\) and the gradient
-for the coefficient on the feature will be
-zero, so computationally, we can just ignore
-missing features.</p>
+it every time we get new observations. That's not quite enough for our Online
+Linear Model (OLM), though, since it also needs to handle missing features.</p>
+<p>Usually when performing regression, we'll normalize our features so that they
+have a mean of zero. This mean is also the expected value of any feature absent
+of other information. When a feature is missing, the simplest way to handle it
+is to assume that the feature has the value of its mean, known as mean
+imputation. Then, if we always normalize input features for this model, we can
+just set missing features to zero. Then its term in the sum determining \(\hat
+y\) becomes zero, its term in the gradient becomes zero, and computationally we
+can just ignore it.</p>
+
 <p>Then, we have an online linear regression model that can handle missing
 features, using the following steps at each iteration:</p>
 <p><ol>
@@ -435,10 +431,12 @@ forests</a> were
 excluded.</p>
 
 <h1>conclusion</h1>
+
 <p>Okay, now we've established some models that we can use for regression in an
 online fashion when the amount of available features varies freely in time. The
-existing literature wasn't of much help, but we constructed two models, that I
-would say are very natural, to solve the problem.</p>
+existing literature didn't have any convex utilitarian online regression methods available,
+but we constructed two models, OLM and OLM-S, that are convex, online, and
+handle varying feature spaces.</p>
 <p>This is everything I needed in terms of models for my thesis, and I could then
 move on to trying to construct data markets for this situation. We'll move on
 to that next time :)</p>
