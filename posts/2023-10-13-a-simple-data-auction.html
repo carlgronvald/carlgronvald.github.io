@@ -1,0 +1,208 @@
+<html><head><title>My Blog</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0/css/bootstrap-grid.min.css" integrity="sha512-vWtGaoxGWtwzJnP6e3YbBCE2BAEbldcuL4TVO3IbW/IFocN/XxuBv3Fuqm7t+I4eZ7p8L9iBElSUqXQUbQmarA==" crossorigin="anonymous" referrerpolicy="no-referrer">   <link rel="stylesheet" href="/assets/style.css"></head><body><header><nav><a href="/"><div class="logo">Carl Frederik Grønvald</div></a>  <ul><li><a href="/about.html">about</a>  </li></ul></nav></header><div class="container-fluid"><h1 class="title">  data markets III: a simple data auction</h1>
+<p><script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script></p>
+<p><script src="/assets/js/data_auctions.js"></script></p>
+<p><div style="display:flex;width:100%">
+ <div style="flex:1;margin:10px;text-align:left;" class="btwn-link">
+ <a href="2023-10-03-basic-auctions.html"> &#171; data markets II: basic auctions</a>
+ </div>
+ <div style="flex:1;margin:10px;text-align:right" class="btwn-link">
+ <a href="2023-12-10-revenue-distribution.html"> data markets IV: revenue distribution &#187; </a>
+ </div>
+</div></p>
+<p>Hi everyone! Today, we're going to look at some auctions that actually work with data. This will mostly be based on the Master's thesis of Maryann Rui, called Auctions of Digital Goods with Externalities<sup id="ref-home-1"><a href="#ref-1">1</a></sup>. This thesis implements several auctions where bidders are buying data from a single monopolistic seller, and are in competition with each other. The thesis deals with three different settings, one of them even with multiple goods instead of just one, but I'll only deal with the simplest setting and the simplest solution, since it gets very complicated very fast.</p>
+<p>If you're interested in learning more about game theory, I also found this very cool course from Stanford called <a href="https://timroughgarden.org/f13/f13.html" target="_blank">Algorithmic Game Theory</a> that really gets deep into it.</p>
+<h1>the setup</h1>
+
+<p>Okay, so. The paper models a market with a fairly simple basic setup:
+- There is one monopolistic seller
+- There are N buyers/bidders
+- Every buyer knows how much value the data of the seller is worth to them
+- Bidders experience negative externalities when another bidder is allocated the data
+- Bidders have some information about these negative externalities</p>
+<p>Negative externalities mean the negative effect that a transaction has on people not involved in the transaction. An example could be buying a car; the buyer gets the positive effect that they can now drive, they might use it to go on trips or drive to work. However, other people experiences negative externalities: The car is dangerous and someone might get hurt from it, the car is noisy, the car increases air pollution. These effects are negative externalities; they're effects on a third party who is not related to the purchase of the car. The thesis has two separate single-good settings. One where bidders know their negative impact on others, and one where bidders know the negative impact of others on themselves. I'll only deal with the second setting here, since it is simpler.</p>
+<p>In a data market we could imagine negative externality arising from competition in another market. Like when I referred to supermarkets in my <a href="/carlgronvald/{% post_url 2023-09-19-data-markets %}" target="_blank">first post</a> about data markets, one supermarket might attract more customers if it is able to provide a better service due to better data. A good market solution has to deal with the incentive structures of externalities.</p>
+<p>Let's talk quickly about the limitations of this model as well. For one, the model has a monopolistic seller that sells either all of their data or none, so it doesn't allow buyers to bid only on the data that is valuable to them. The model also needs every buyer to know their exact valuation of the data bundle to be able to bid correctly. This is a pretty unrealistic expectation; the true situation is probably more of an approximate valuation where winner's curse effects might come into play if directly bidding your own valuation. It is also very difficult to estimate the negative externalities both of others on you and of you on others.</p>
+<h1>notation</h1>
+<p>There will be a bit of math involved today, so I'll just introduce a bit of notation.</p>
+<p>$$
+\begin{aligned}
+    &x & \text{The allocation vector, } x_i \text{ is whether bidder } i \text{ receives data}\\
+    &p & \text{The price vector, } p_i \text{ is price paid by bidder } i\\
+    &v & \text{The valuation vector, } v_i \text{ is the valuation of the data by bidder } i\\
+    &\eta_{j \leftarrow i} & \text{Negative externality imposed by bidder } j\text{ on bidder } i \\
+    &I & \text{Index set of bidders, } I = \{1,2,..,N\}
+\end{aligned}
+$$</p>
+<p>That should be enough to understand what's going on</p>
+<h1>revenue & social welfare maximization</h1>
+<p>I've talked before about how maximizing revenue in an auction is a sensible goal. Alternatively, you can maximize for what is known as social welfare. Maximizing for social welfare means maximizing for the utility received in an auction by all bidders minus the prices those bidders pay. So if we define \(x\) as an allocation, \(u_i\) as the utility function of bidder \(i\) (how much utility they get from the allocation \(x) \), and \(p_i\) as the price paid by bidder \(i\), the social welfare \(SW\) of the allocation is given by the function</p>
+<p>$$SW(\mathbf x, \mathbf p) = \sum_{i \in I} u_i(\mathbf x) - p_i$$</p>
+<p>This social welfare is then what we want to maximize, under the conditions that the auction is still truthful and ex-post individually rational. If you don't remember what truthfulness and ex-post individual rationality are, see my <a href="/carlgronvald/{% post_url 2023-10-03-basic-auctions %}" target="_blank">last post</a>. There might be revenue generated in a social welfare maximizing auction, but only as a side effect. Social welfare maximization is a much easier goal than revenue maximization mathematically. There is in fact a result saying that in a broad category of markets, there exists an auction mechanism that optimizes social welfare which is known as the VCG mechanism. The thesis solves for the optimal market mechanism for both situations, maximizing either revenue or social welfare. The central requirement is that every bidder knows the valuation of every outcome based only on their own information.</p>
+<p>A question for advanced readers: I haven't entirely understood whether the Bayesian-Nash Incentive Compatible social welfare maximizing auction is also known as the VCG auction, or in general how it relates to the VCG auction? If you're reading this and you know, please do write me, thanks :)</p>
+<p>{% comment %}
+see: Algorithmic Game Theory Lecture #5: Revenue-Maximizing Auctions∗ (stanford university)
+{% endcomment %}</p>
+<h1>VCG pricing</h1>
+<p>As mentioned, there often exists a truthful auction mechanism that maximizes social welfare. Lecture 7 in the previously mentioned <a href="https://timroughgarden.org/f13/f13.html" target="_blank">Stanford course</a> is about this.  Actually, it goes a little further: In every environment, if we know the social welfare maximizing allocation rule, we can also determine what price to charge the bidders. Putting together the optimal allocation rule and this specific payment method gives us what is known as the VCG (Vickrey-Clarke-Groves) mechanism.</p>
+<p>If we think about a second-price auction, it charges the winning bidder the value that someone else would have received in the case he wasn't there. Put another way, we charge the winning bidder the externality they pose unto others from participating in the auction. The second-price auction is also often known as the VCG second-price auction, since it is the simplest version of a VCG mechanism. The general VCG auction pricing works the exact same way, charging every bidder an amount equal to the externality they pose on others by entering the auction.</p>
+<h1>knowing the effects of others</h1>
+<p>In the setup I'm working with, the private information of the bidders is their independent valuation of the data bundle \(v_i\), along with the negative externality they experience from every other participant, \( \{\eta_{i \leftarrow j}\}_{j \in I \backslash i}\). This means that given an allocation, each bidder knows exactly their own utility from the allocation, as was required to construct the VCG mechanism. As a bid, the bidders submit this information \(v_i\) and \(\eta_{i \leftarrow j}, \, j \in I \backslash i\) to the marketplace, but they can of course lie in submitting this information.</p>
+<h2>social welfare maximization</h2>
+<p>The thesis gives a very easy solution to the social welfare problem which might in fact be pretty obvious if you were to develop an auction mechanism for this situation yourself. It turns that the optimal allocation is to assign the digital good to every buyer \(i\) whose bid valuation \(v_i\) is higher than the sum of everyone else's negative externality originating from buyer \(i\) receiving the good, \(\sum_{j \in I \backslash i} \eta_{j \leftarrow i}\). They name this size \(W_i\).</p>
+<p>$$W_i = v_i - \sum_{j \in I \backslash i} \eta_{j \leftarrow i} $$</p>
+<p>Calculating the \(W\)s, then, we allocate the data to every agent for which \(W_i \geq 0\), and charge them a price equal to the externalities they impose by joining the market as explained before. I wrote up the code for this in javascript below.</p>
+<p>{% highlight javascript %}</p>
+<p>/</p>
+<p>    }
+    const present_welfare = present_welfares.reduce</p>
+<p>    // Create auction parameters if i is absent
+    var absent_valuations = valuations
+    absent_valuations.splice(i, 1)
+    var absent_externality_matrix = externality_matrix
+    absent_externality_matrix.splice(i, 1)
+    for (var j = 0; j < absent_externality_matrix.length; j++) {
+        absent_externality_matrix</p>
+<p>    // Calculate welfare if i is absent from the auction
+    const absent_ws = vcg_ws(absent_valuations, absent_externality_matrix).map</p>
+<p>    // Return the externality imposed by i joining the auction.
+    return absent_welfare - present_welfare
+}</p>
+<p>/</p>
+<p>{% endhighlight %}</p>
+
+<p>Now you can try this auction yourself! You'll be in a 5 participant auction. Remember that you need to submit your own valuation of receiving the data, as well as how much you would lose in case your competitors are supplied with the data. I'll give you your true parameters, and then you can try to play the auction as well as possible for you given those parameters. All your opponents will be bidding truthfully.</p>
+<p>Your valuation of receiving the data is 80$. Agent 2 is your biggest competitor in the market. If they receive the data, it'll reduce your profit by 15$ from competition. Agent 3 is also a fairly sized competitor, and will reduce your profit by 10$ if they receive the data. Agent 4 & 5 are indirect competitors, and will only reduce your profit by 5$ from competition each if they receive the data. This means that your truthful bid is to put in 80 as your bid, 15 as externality 2, 10 as externality 3, and 5 as externality 4 & 5.</p>
+<p>Bid:<input type="text" id="in-ext-sw-user-bid" placeholder="bid..."/>  <br>
+Externality 2:<input type="text" id="in-ext-sw-user-ext-1" placeholder="Ext 2..."/> 
+Externality 3:<input type="text" id="in-ext-sw-user-ext-2" placeholder="Ext 3..."/> <br>
+Externality 4:<input type="text" id="in-ext-sw-user-ext-3" placeholder="Ext 4..."/> 
+Externality 5:<input type="text" id="in-ext-sw-user-ext-4" placeholder="Ext 5..."/> </p>
+<p><input type="button" id="in-ext-sw-button" onclick="sw_auction()" value="Run Auction"/> <span id="in-ext-sw-failure" style="color:red"></span></p>
+<p><table>
+<tr><th colspan="6"> Results table</th></tr>
+<tr><td></td><td> You </td><td> Agent 2</td> <td> Agent 3 </td> <td> Agent 4 </td> <td> Agent 5 </td>
+</tr>
+<tr>
+<td> Valuation </td>
+<td id ="in-ext-sw-val-0"> </td>
+<td id ="in-ext-sw-val-1"> </td>
+<td id ="in-ext-sw-val-2"> </td>
+<td id ="in-ext-sw-val-3"> </td>
+<td id ="in-ext-sw-val-4"> </td></p>
+<p></tr>
+<tr>
+<td> Allocated </td>
+<td id ="in-ext-sw-alloc-0"> </td>
+<td id ="in-ext-sw-alloc-1"> </td>
+<td id ="in-ext-sw-alloc-2"> </td>
+<td id ="in-ext-sw-alloc-3"> </td>
+<td id ="in-ext-sw-alloc-4"> </td>
+</tr></p>
+<p><tr>
+<td> Price </td>
+<td id = "in-ext-sw-price-0"></td>
+<td id = "in-ext-sw-price-1"></td>
+<td id = "in-ext-sw-price-2"></td>
+<td id = "in-ext-sw-price-3"></td>
+<td id = "in-ext-sw-price-4"></td>
+</tr>
+<tr>
+<td> Profit</td>
+<td id = "in-ext-sw-profit-0"></td>
+<td id = "in-ext-sw-profit-1"></td>
+<td id = "in-ext-sw-profit-2"></td>
+<td id = "in-ext-sw-profit-3"></td>
+<td id = "in-ext-sw-profit-4"></td>
+</tr></p>
+<p></table></p>
+<p><table>
+<tr>
+<th colspan="6">Externalities table</th>
+</tr>
+<tr>
+<td> Receiving \ Giving</td>
+<td> You </td>
+<td> Agent 2</td>
+<td> Agent 3</td>
+<td> Agent 4</td>
+<td> Agent 5</td>
+</tr>
+<tr>
+<td> You </td>
+<td id="in-ext-sw-ext-0-0"></td>
+<td id="in-ext-sw-ext-0-1"></td>
+<td id="in-ext-sw-ext-0-2"></td>
+<td id="in-ext-sw-ext-0-3"></td>
+<td id="in-ext-sw-ext-0-4"></td>
+</tr>
+<tr>
+<td> Agent 2</td>
+<td id="in-ext-sw-ext-1-0"></td>
+<td id="in-ext-sw-ext-1-1"></td>
+<td id="in-ext-sw-ext-1-2"></td>
+<td id="in-ext-sw-ext-1-3"></td>
+<td id="in-ext-sw-ext-1-4"></td>
+</tr>
+<tr>
+<td> Agent 3</td>
+<td id="in-ext-sw-ext-2-0"></td>
+<td id="in-ext-sw-ext-2-1"></td>
+<td id="in-ext-sw-ext-2-2"></td>
+<td id="in-ext-sw-ext-2-3"></td>
+<td id="in-ext-sw-ext-2-4"></td>
+</tr>
+<tr>
+<td> Agent 4</td>
+<td id="in-ext-sw-ext-3-0"></td>
+<td id="in-ext-sw-ext-3-1"></td>
+<td id="in-ext-sw-ext-3-2"></td>
+<td id="in-ext-sw-ext-3-3"></td>
+<td id="in-ext-sw-ext-3-4"></td>
+</tr>
+<tr>
+<td> Agent 5</td>
+<td id="in-ext-sw-ext-4-0"></td>
+<td id="in-ext-sw-ext-4-1"></td>
+<td id="in-ext-sw-ext-4-2"></td>
+<td id="in-ext-sw-ext-4-3"></td>
+<td id="in-ext-sw-ext-4-4"></td>
+</tr>
+</table></p>
+<p>I can tell you that the truthful bid is the optimal bid. You might have noticed what happens if you don't bid truthfully. If you assign too large externalities on your competitors, they are pushed out of the auction, but you end up paying more for your participation. If you assign too low, there are situations where you could have avoided a competitor acquiring the data, but you don't. Similarly with valuations. If you set your valuation too low, then you won't be assigned the data even though you were willing to pay the price of your competitors' externalities. If you set your valuation too high, then you might pay more to compensate your competitors than you actually earn from acquiring the data.</p>
+<p>You might be considering just opting out of the auction. You're imagining a case where externalities are really high but valuations aren't really that high, in which case you just want to opt out of the auction. For any individual, this would in fact be worse than opting in, since your opponents might then exert even greater externalities on you. This is also why you would stay in the auction even when you come out with negative profits. If they chose to opt out, they would have even higher negative profits from the externalities from everyone else.</p>
+<h2>the optimal allocation rule</h2>
+
+<p>You could probably have come up with the optimal allocation rule yourself if you sat down and worked through it. Let's try to argue our way there. We are maximizing the social welfare, which is given by</p>
+<p>$$
+  SW(x,p) = \sum_{i \in I} (v_i x_i - \sum_{j \in I \backslash i} (\eta_{i \leftarrow j} \,x_j) - p_i )
+$$</p>
+<p>Let us for now ignore the price, since the VCG mechanism gives us a pricing mechanism given the optimal allocation mechanism. If we ignore the price, we are now maximizing</p>
+<p>$$
+    \underset{x}{\max} \sum_{i \in I} (v_i x_i - \sum_{j \in I \backslash i} (\eta_{i \leftarrow j} \,x_j) )
+$$</p>
+<p>By some shuffling around of indices, we can rewrite this as</p>
+<p>$$
+    \sum_{i \in I} (v_i x_i - \sum_{j \in I \backslash i} \eta_{j \leftarrow i} \, x_i) = \sum_{i \in I} (v_i - \sum_{j \in I \backslash i} \eta_{j \leftarrow i} )x_i
+$$</p>
+<p>Now we are summing over these coefficients on \(x_i\), \((v_i - \sum_{j \in I \backslash i} \eta_{j \leftarrow i} ) \). But they are exactly equal to our \(W_i\)s from earlier and we readily see that we maximize the sum by setting \(x_i=1\) when \(W_i \geq 0\), meaning we allocate to agent \(i\) when \(W_i \geq 0\) . Then we use the VCG pricing rule from earlier, charge every agent the externality they induce on everyone else by joining the auction, and we have the social welfare maximizing auction for the setting.</p>
+<h1>further development</h1>
+
+<p>You might wonder what happens in this auction if there are no externalities between the bidders? Then the bidders end up paying nothing for the data, since they now impose no externalities by joining the auction. This is a problem, obviously, since no one would be willing to sell data for no returns. This is one reason why we would want to construct the revenue-maximizing auction instead of the social-welfare maximizing auction.</p>
+<p>The second setting of the thesis is where people know their own negative effect on others and bid those along with their valuation. In this situation, the assumptions needed for existence of a truthful mechanism of the strongest type as promised in the VCG mechanism are actually broken. This is because every bidder is not individually able to assign a valuation to an outcome, since it depends on the private information of other bidders. This doesn't mean that there doesn't exist a truthful social welfare optimizing auction mechanism in this setting, just that it is a weaker kind of truthful (BNIC instead of DSIC, <a href="https://en.wikipedia.org/wiki/Incentive_compatibility" target="_blank">wiki</a>). It also becomes more difficult to construct it.</p>
+<h1>conclusion</h1>
+
+<p>Okay this was a bit of a longer post but now we've seen an auction-based data marketplace under externalities that has a lot of the properties we care about. Maybe it wasn't the most useful auction in practice, as the seller is really rewarded based on the externalities between buyers, and there are situations where the seller is really compensated very little for their data, in a way that I would argue is not fair to the seller. This is resolved by constructing the revenue maximizing auction instead, but the setting is still not super realistic.</p>
+<p>We saw also that externalities between bidders can affect the auction a lot. This is something we would have to take into account in crafting a true data marketplace.</p>
+<p>Next time I will dive into revenue distribution between sellers and robustness to replication. I'll likely revisit the 2019 paper by Agarwal et al.<sup id="ref-home-2"><a href="#ref-2">2</a></sup> and see what we can learn about the incentives involved in selling data on a data marketplace.</p>
+<p><div style="display:flex;width:100%">
+ <div style="flex:1;margin:10px;text-align:left;" class="btwn-link">
+ <a href="2023-10-03-basic-auctions.html"> &#171; data markets II: basic auctions</a>
+ </div>
+ <div style="flex:1;margin:10px;text-align:right">
+ <a href="2023-12-10-revenue-distribution.html" class="btwn-link"> data markets IV: revenue distribution &#187; </a>
+ </div>
+</div></p>
+<h1>references</h1>
+</div></body></html>

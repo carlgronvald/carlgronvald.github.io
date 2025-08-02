@@ -1,0 +1,203 @@
+html { 
+  scroll-padding-top: 200px;
+}
+
+body {
+    font-family: Tahoma, serif;
+}
+
+:root {
+    --col1: #538a22;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+.container-fluid {
+    width: 60%;
+    margin-top: 5rem;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+    margin-bottom: 0.5rem;
+    text-indent: 1rem;
+}
+
+.title {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+p {
+    margin-bottom: 0.7rem;
+}
+
+/* Header */
+header {
+
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    height: 3rem;
+    padding: 0 1.5rem;
+
+    background-color: transparent;
+
+    font-size: 1.0rem;
+    text-transform: capitalize;
+    color: #fff;
+
+    z-index: 100;
+    background-color: var(--col1);
+}
+
+a {
+    color: inherit;
+    border-radius:2px;
+}
+
+a:visited {color : inherit; }
+
+a:hover {
+  color: var(--col1);
+}
+
+header a{
+  text-decoration:none;
+}
+
+header a:hover {
+    color: var(--col1);
+    background-color: #fff;
+}
+
+header nav {
+    display: flex;
+    align-items: right;
+}
+
+header nav ul {
+    display: flex;
+    list-style: none;
+}
+
+header nav ul li {
+    margin-left: 6rem;
+}
+
+/* Tables */
+
+table {
+    width: 100%;
+    margin-bottom: 2rem;
+
+}
+
+
+tr:first-child td,
+tr:first-child th {
+    background-color: var(--col1);
+    color: #fff;
+    border: 5px solid var(--col1);
+    border-radius: 5px;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+td,
+th,
+tr {
+    min-width: 100px;
+    min-height: 100px;
+}
+
+.post-list a {
+  text-decoration:none;
+}
+
+hr {
+    border: 0;
+    border-top: 2px solid #aaaaaa;
+    height: 2px;
+    width: 100%;
+}
+
+.wide-img {
+  width:50%;
+  margin:auto;
+  display:block;
+}
+
+@media all and (max-width:1024px) {
+  body {
+    font-size:140%;
+    line-height:130%;
+  }
+
+  .wide-img {
+    width:100%;
+  }
+
+  .container-fluid {
+      width: 85%;
+      margin-top: 10rem;
+  }
+
+
+  h1 {
+    font-size: 302%;
+  }
+
+  h1,h2,h3,h4,h5 {
+    margin-top:7rem;
+    margin-bottom:1rem;
+  }
+
+  header a {
+    font-size:250%;
+  }
+
+  header {
+    height: 8rem;
+  }
+
+  .post-list a {
+    font-size:150%;
+  }
+
+  .post-list span {
+    margin-bottom: 3rem;
+    display:block;
+  }
+
+  .btwn-link {
+    font-size:100%;
+  }
+
+  .MathJax {
+    font-size:120% !important;
+  }
+  
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    text-indent: 0rem;
+    line-height:100%;
+  }
+}

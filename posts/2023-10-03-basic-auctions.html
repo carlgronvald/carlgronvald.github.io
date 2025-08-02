@@ -1,0 +1,99 @@
+<html><head><title>My Blog</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0/css/bootstrap-grid.min.css" integrity="sha512-vWtGaoxGWtwzJnP6e3YbBCE2BAEbldcuL4TVO3IbW/IFocN/XxuBv3Fuqm7t+I4eZ7p8L9iBElSUqXQUbQmarA==" crossorigin="anonymous" referrerpolicy="no-referrer">   <link rel="stylesheet" href="/assets/style.css"></head><body><header><nav><a href="/"><div class="logo">Carl Frederik Grønvald</div></a>  <ul><li><a href="/about.html">about</a>  </li></ul></nav></header><div class="container-fluid"><h1 class="title">  data markets II: basic auctions</h1><p><script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script></p>
+<p><script src="/assets/js/auctions.js"></script></p>
+<p><div style="display:flex;width:100%">
+ <div style="flex:1;margin:10px;text-align:left;" class="btwn-link">
+ <a href="2023-09-19-data-markets.html">&#171; data markets I: introduction</a>
+ </div>
+ <div style="flex:1;margin:10px;text-align:right" class="btwn-link">
+ <a href="2023-10-13-a-simple-data-auction.html">data markets III: a simple data auction &#187;</a>
+ </div>
+</div>
+Hi! Today we're going to talk about auctions. The study of auctions is really the study of <a href="https://en.wikipedia.org/wiki/Game_theory" target="_blank">game theory</a>, so just as a disclaimer before we start, I study mathematics, not economics. I am going to look into some common auction methods and end up looking at how they relate to data markets.</p>
+<h1>the auction problem</h1>
+
+<p>Society often needs ways of distributing goods between people, and rewarding the sellers of those goods. This is basically the goal of auctions. The theory of auctions almost always focuses on winner-takes-it-all auctions, because only one person can own one physical good. This means that any learnings acquired here will later need to be adapted for the case of data, since data can be infinitely replicated. </p>
+<p>When studying auctions, we're interested in what is known as the auction <i>equilibrium</i>. The equilibrium is the way that the auction plays out if every participant chooses their optimal strategy in the auction. It means that every player has fully understood the rules and mathematically computed their perfect move, conditional on every other player doing the same thing. The equilibrium then explains the "perfect" outcome of the auction if everyone knew exactly how to play their cards. I will use the word profit to refer to the difference between how a bidder values a good and how much they pay for it, so that a person valuing a pair of shoes at eg. 90€ and paying 75€ for them would have a profit of 15€.</p>
+<h1>common auctions</h1>
+
+<p>The first thing we think about when imagining an auction is a guy on the stand, taking in bids one at a time in ascending order. This is what is known as an english auction, and is a common auction system. Another common auction system is the vickrey acution, or second-price auction, which is an auction where bidders commit a sealed bid for a good, and the highest bidder wins the good at the second-highest bidding price.</p>
+<p>Under some simple assumptions, these two auctions both have the property of being "truthful" auctions, which is a property we really like. A truthful auction is one where the best choice for all bidders is to bid their true valuations. They also maximize revenue under these same assumptions. Actually, under these simple assumptions, we have what is known as the <a href="https://en.wikipedia.org/wiki/Revenue_equivalence#:~:text=Revenue%20equivalence%20is%20a%20concept,has%20the%20same%20expected%20revenue." target="_blank">revenue equivalence</a> theorem, which says that a lot of auction models under these assumptions give the same revenue in expectation, as long as the auction equilibrium awards the good to the bidder with the highest value, and a bidder with a minimum valuation (we imagine that there's a minimum possible value for the good) never earns profit (gets the good but pays less than the minimum valuation).</p>
+<h1>second-price auction</h1>
+
+<p>We'll stay under our simple assumptions and investigate the second-price auction a little further. I created some simple javascript code for a second price auction. Below, you can see the essential implementation of a second price auction.
+{% highlight javascript %}</p>
+<p>// Function for running the second price auctton, given a list of bids
+// // Function for running the second price auctton, given a list of bids
+function second_price(bids) {
+    // Find highest and second highest bids
+    const </p>
+<p><input type="text" id="spa-user-bid" placeholder="bid..."/> 
+<input type="button" onclick="second_price_ipv()" value="Run Auction"/></p>
+<p>Below are your opponent valuations and bids. They will be revealed when you run the auction.
+<table>
+  <tr>
+    <td id="spa-op-1">...</td> <td id="spa-op-2">...</td> <td id="spa-op-3">...</td> <td id="spa-op-4">...</td>
+  </tr>
+  <tr>
+    <td id="spa-op-5">...</td> <td id="spa-op-6">...</td> <td id="spa-op-7">...</td> <td id="spa-op-8">...</td>
+  </tr>
+</table></p>
+<p><span id="spa-output">Auction results here...</span></p>
+<p>Average profit: <span id="spa-output-avg-profit">0</span>€ Total trades: <span id="spa-output-total-trades">0</span></p>
+<p>Well, whatever your empirical findings were, the theoretical findings are that there are no strategies better than bidding truthfully. It is pretty easy to convince yourself of this. Let's say in the above auction, you want to try to bid for the LP, and you then slightly increase your bid above your valuation, to make sure you still win the LP. You'll win at the next bid below you, anyway, so you'll likely still be happy with the outcome. Notice, though, that the only new wins you get are the ones you <i>don't want</i>, so really, you gain nothing by increasing your bid. If you lower your bid, you'll again still get the LP at the same price, until you lower it so far that you don't win the LP anymore. but you were willing to pay what you paid for the LP before, so by lowering your bid, you are again either off the same or worse.</p>
+<p>That doesn't mean that bidding truthfully is better than any other strategy, but there are no better strategies. This is known as a weakly dominant strategy, meaning this auction type is what is known as <a href="https://en.wikipedia.org/wiki/Incentive_compatibility" target="_blank">dominant-strategy incentive-compatible</a> (DSIC), or telling the truth is at least as good as any other strategy.</p>
+<p>Another property kept by the truthful bidding strategy is that you will never pay more for a good than what you valued it at. This is known as ex-posteriori individual rationality (EPIR). This might not seem very difficult to achieve, but retaining this property can in fact limit the auction mechanisms you can construct. Consider for example a lottery. Even in a fair lottery where the payouts are equivalent to or higher than the buy-in, some participants still end up paying to receive nothing, so the lottery won't satisfy EPIR.</p>
+<p>The auction also satisfies one last important property, which is that it maximizes auction revenue. In auction design, maximizing revenue is a very sensible goal. This is because agents will only pay as much as they stand to gain in the market, so if you maximize revenue, you also get auction prices to be as close as possible to the actual agent valuations. </p>
+<h1>those pesky assumptions</h1>
+
+<p>I told you before that the second-price auction and the english auction maximize revenue and incentivize truth-telling. This is only true under some assumptions, known as the independent private value model. Mathematically in this model, auctions are represented as:</p>
+<p>1. A series of bidders \(b_i, i \in I\)
+2. Trying to buy one object
+3. Each bidder \(i\) observes a signal \(S_i \sim F(\cdot) \)
+4. Their signals are independent
+5. Their values are given directly from their signals, \(v_i(s_i) = s_i\)</p>
+<p>One big issue here is that assumptions 4 and 5 really aren't very accurate to the real world. It is very common that our valuations of things are affected by the valuations of other people. Often, we don't have full information on how to value things, and the valuations of others help us to value them properly. This is where the <a href="https://en.wikipedia.org/wiki/Winner%27s_curse" target="_blank">winner's curse</a> comes from, and will lead to strategic bidding coming back into both english auctions and second-price auctions. Assumptions 3-5 are now removed, and instead we have the assumptions:
+3. Each bidder \(i\) observes a signal \(S_i\), where the signals are given by a joint density \(f(\cdot) \). 
+4. The value to bidder \(i\) is given by a function of both their own signal and everyone else's signal \(v(s_i, s_{I\backslash i}) \)</p>
+<p>You might see some more assumptions on here in the literature, but I'll keep it simple. Let's look at the second-price auction again in this new situation.</p>
+<h1>second-price with interdependent valuations</h1>
+
+<p>Now we do not fully know our valuation of the good before the auction. Let's try our auction example from earlier again, now with a prior and posterior valuation. Let's say that you're working for a construction firm, and you're looking to buy steel on auction. You and all the other firms looking to buy the good all have some idea of what it's worth, but you're all estimating. This means that someone might estimate too high, and then be disappointed when they buy the good. Let's see it play out. This time, I'll give you your prior estimate for the value of the good, and then you can submit your bid based on it. </p>
+<p><input type="text" id="spadv-user-bid" placeholder="bid..."/> 
+<input type="button" id="spadv-button" onclick="sp_dependent_valuation()" value="Start Auction"/>
+<span id="spadv-your-pri-valuation">Your prior valuation: ...</span>
+<span id="spadv-your-post-valuation">The true valuation: ...</span></p>
+<p>Below are your opponents' prior valuations (and bids). They will be revealed when you run the auction.
+<table>
+  <tr>
+    <td id="spadv-op-1">...</td> <td id="spadv-op-2">...</td> <td id="spadv-op-3">...</td> <td id="spadv-op-4">...</td>
+  </tr>
+  <tr>
+    <td id="spadv-op-5">...</td> <td id="spadv-op-6">...</td> <td id="spadv-op-7">...</td> <td id="spadv-op-8">...</td>
+  </tr>
+</table></p>
+<p><span id="spadv-output">Auction results here...</span></p>
+<p>Average profit: <span id="spadv-output-avg-profit">0</span>€ Total trades: <span id="spadv-output-total-trades">0</span></p>
+<p>Do you notice something different? It is very easy to bid your expected valuation but not profit. In fact, it almost seems like you'll always lose! And that effect not only happens to you, it happens to everyone (because your opponents are also bidding truthfully). Also, it gets worse the more opponents you have. Now, to bid optimally, you have to guess what your opponents are going to bid. So your problem becomes not only about your individual valuations, but also about your opponents. In short, bidding well in a second price auction becomes a way harder problem.</p>
+<p>Not only do we lose truthfulness, we also lost ex-posteriori individual rationality (EPIR). Now, you can end up buying something at a price that you don't actually value it at, since your valuation changes after buying it. To get all of these back, we'll need some new auction mechanisms. We might look into some of those mechanisms in the future, but for now, we'll look into the maths of perfect bidding in this kind of second-price auction.</p>
+<h1>strategic second-price auction</h1>
+
+<p>Let's think for a second about what an optimal bidding strategy would be. I won't derive it algebraically, but I will motivate it a little. The bidder is maximizing their profit. They are willing to buy the good at any price below their own posterior valuation, so they want information on whether everyone else is going to bid below them. Then, we might expect the optimal strategy to use the prior valuation for information, as well as the chance of everyone else bidding lower. </p>
+<p>Theoretically it turns out to be given by</p>
+<p>$$ \mathbb E[v(s_i, s_{I \backslash i}) | s_i, \underset{j \neq i}{\max} s_j = s_i]$$</p>
+<p>or, in words: The optimal strategy is to bid your expected value conditional on your own prior valuation and on everyone else bidding lower than or equal to your prior valuation. This of course needs you to know the probability distribution of the signals. I might come back to this another time and construct the optimal bidding strategy, but for now, I won't get into it, since it is a lot of fairly involved probability theory. In this more general case, different auctions are needed to get to truthfulness.</p>
+<h1>data</h1>
+
+<p>Now we've looked into auctions for a little bit, but they all focus on winner-takes-all auctions. These auction models don't translate directly into data, but the way of thinking does translate. We've learned of some properties that we would like to keep for an eventual auction model:
+1. Truthfulness - ideally, we don't want strategic bidding, and we want everyone to be truthful about their gain from being in the auction. 
+2. Ex Posteriori Individual Rationality - We want people to only pay if they acquire something of at least the value they pay.</p>
+<p>Also, we can try to start modeling the data situation mathematically. I'll try to look into this modeling next, and see what others have done. </p>
+<p><div style="display:flex;width:100%">
+ <div style="flex:1;margin:10px;text-align:left;" class="btwn-link">
+ <a href="2023-09-19-data-markets.html">&#171; data markets I: introduction</a>
+ </div>
+ <div style="flex:1;margin:10px;text-align:right" class="btwn-link">
+ <a href="2023-10-13-a-simple-data-auction.html">data markets III: a simple data auction &#187;</a>
+ </div>
+</div></p></div></body></html>

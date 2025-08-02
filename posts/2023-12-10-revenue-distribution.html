@@ -1,0 +1,184 @@
+<html><head><title>My Blog</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0/css/bootstrap-grid.min.css" integrity="sha512-vWtGaoxGWtwzJnP6e3YbBCE2BAEbldcuL4TVO3IbW/IFocN/XxuBv3Fuqm7t+I4eZ7p8L9iBElSUqXQUbQmarA==" crossorigin="anonymous" referrerpolicy="no-referrer">   <link rel="stylesheet" href="/assets/style.css"></head><body><header><nav><a href="/"><div class="logo">Carl Frederik Grønvald</div></a>  <ul><li><a href="/about.html">about</a>  </li></ul></nav></header><div class="container-fluid"><h1 class="title">  data markets IV: revenue distribution</h1>
+<p><link rel="stylesheet" href="/assets/css/revenue_distribution.css">
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+<script src="/assets/js/revenue_distribution.js"></script></p>
+<p><div style="display:flex;width:100%">
+ <div style="flex:1;margin:10px;text-align:left;" class="btwn-link">
+  <a href="2023-10-13-a-simple-data-auction.html"> &#171; data markets III: a simple data auction</a>
+ </div>
+ <div style="flex:1;margin:10px;text-align:right" class="btwn-link">
+  <a href="2024-02-18-online-learning.html"> data markets V: online learning &#187; </a>
+ </div>
+</div></p>
+<p>Welcome back! Today I'll be exploring a part of our by now favorite paper "A Marketplace for Data: An Algorithmic Solution" by Anish Agarwal, Munther Dahleh, and Tuhin Sakar (2019)<sup id="ref-home-1"><a href="#ref-1">1</a></sup>. I'll be exploring their method for revenue distribution, and to do this, we have to first understand a concept from cooperative game theory called Shapley values (named after Lloyd Shapley of Nobel Prize-fame). You might have heard of Shapley values before if you're into machine learning, since Shapley values are also an <a href="https://iancovert.com/blog/understanding-shap-sage/" target="_blank">often used tool</a> in machine learning interpretability. So, let's get into it!</p>
+<h1>shapley values</h1>
+<p>Cooperative game theory is about games where players can construct groups ("coalitions"), where some external factor ensures cooperation inside the group. In cooperative game theory the analysis is focused on how coalitions form and what payout the coalition receives, or sometimes, what cost the coalition incurs. A good example of a game in cooperative game theory is sharing a taxi ride. Say three people are going home from a party together. Their houses are in a row, but at different distances from their venue. Here, the partygoers (players) can all save money by grouping up and splitting the taxi. The cost of a "coalition" (group of partygoers) is the total cost of the taxi taking that entire group home. The group where all players are cooperating is known as the "grand coalition".</p>
+<p>The Shapley value is a way to distribute the payouts (or costs) from a cooperative game in a way generally understood to be fair. Each player receives a Shapley value, which is the fraction of the payout or cost that goes to them. The four defining properties of the Shapley value are:
+1. Balance: The sum of the Shapley values of all the players is equal to the payout of the grand coalition. This means that in a payout sense all the money earned by the coalition is distributed among the players.
+2. Symmetry: If two players have the same effect in all coalitions, then their Shapley value is the same. E.g. if in the taxi situation two people lived in the same house, they have the same Shapley value.
+3. Zero Element / Null Player: If a player has no effect on the payout or cost, then their Shapley value is zero.
+4. Additivity: If you have a game where all payouts are equal to the payouts of two other games added together, then every player's Shapley value is equal to the sum of their Shapley values in the two other games. </p>
+<p>The Shapley value is the only way to distribute payouts that fulfills these four properties. Shapley values can be calculated by looking at all possible orderings of all players, and noting the change in total payout when adding in every single player. You would think that balance is an extremely natural feature, but Agarwal et al. in fact end up losing the balance property in their payment distribution method. As a side note, there are in fact two different kinds of Shapley values when dealing with machine learning models, interventional and observational. I won't get more into this difference, but know that the paper and I will only look at observational Shapley values today.</p>
+<p>Remember again the situation that we're looking at. We have an auction-driven data marketplace with buyers and sellers. We're interested in figuring out how to distribute the payment of the buyers between the sellers. The full model has several buyers and several sellers, but we will see the situation from the sellers' perspective with a single, fixed buyer. The sellers provide features for sale on the marketplace, and the market needs to pay them for the features they provide. To do this, we'll use Shapley values, and the "players" will be the features sold by the sellers in the market</p>
+<h1>agarwal et al.'s revenue distribution</h1>
+<p>Et al. is such a silly way to write "and others". Anyway, the revenue distribution in the paper is based on Shapley values. The paper defines a monotonic non-decreasing gain function from increased quality of prediction, i.e. the buyer in the marketplace has to specify how much monetary gain they experience from an increase in prediction quality. The owners of the features are then paid based on the resulting Shapley values when creating coalitions of features and measuring increase in prediction quality when retraining the machine learning model on the coalitions of feature sets. By also assuming that adding models always improves precition quality, the paper guarantees that the optimal coalition will be the grand coalition of all features</p>
+<p>The method incentivizes all sellers to provide their best features for the task at hand. If there were a fixed amount of sellers who can each only supply one feature, the method would also give a fair payout to the sellers as understood by the Shapley value. Unfortunately, using Shapley values directly does not work in practice due to replication of features. If we have two participants Alex and Brody who have the same single feature for sale in the market, they will under Shapley value payment receive the same payment, let's say there's a total payment of 1€ and they each receive \(\frac 1 2\)€. Now, Alex duplicates his feature and sells the exact same feature again in the market. Under Shapley value payouts, Alex now receives a total payment of \(\frac 2 3\)€, and Brody only receives \(\frac 1 3\)€. But this isn't fair! Now, Alex receives a higher payout than Brody even though they both contribute the exact same to the market.  In response to this, the paper introduces a new fifth fairness property, robustness to replication, saying that no market participant can increase their part of the pie just by replicating their own features.</p>
+<p>The paper proves that, under their assumptions and when payout happens on the feature level, there <i>does not exist</i> a payment method where the four properties of the Shapley value and robustness to replication all hold at the same time. Agarwal and his boys decide to try something else out and keep three of the properties of the Shapley value, throwing out the fourth. They throw away balance. Now, they downweigh the total amount of money paid out based on a similarity measure between features. I'll explain the exact method a little later, but this means that the money paid to the market is not necessarily all paid out to the sellers. </p>
+<h1>the exact method</h1>
+
+<p>Many people have already explained how to calculate Shapley values, and very well. If you want to know, see <a href="https://vknight.org/Year_3_game_theory_course/Content/Chapter_16_Cooperative_games/" target="_blank">this post</a>. The naïve payout distribution by the paper is then to see the features as players and pay each feature their Shapley value. To calculate the payout of every coalition, the model is retrained on every coalition, and the increase in prediction value is calculated. Calculating the Shapley values for every feature out of \(n\) features is a problem of complexity \(O(n!\)), also known as damn hard. Therefore, the paper creates a method for calculating approximate Shapley values, to make the calculation feasible.</p>
+<p>The naïve method is not robust to replication, as discussed earlier. Agarwal et al. create a payout method that is robust to replication. They do this by penalizing the payout to each feature based on a similarity measure with other features and a regularization parameter \(\lambda\). Say we have a feature \(i\) with Shapley value \(\phi(i\)). We define a similarity measure between two features \(SM(i,j\)). Then, the paper calculates the replication robust payout \(\hat \phi(i\)) as </p>
+<p>$$ \hat \phi(i) = \phi(i) e^{-\lambda \sum_{j \neq i}^n SM(i,j)}$$</p>
+<p>The similarity measure \(SM\) has to follow some rules, e.g. \(SM(i,j)=1\) when the features \(i\) and \(j\) are identical. This means that if one person supplies the same feature twice, they will have their payout for those features divided by \(e^\lambda\), which for \(\lambda=\log(2\)) would mean that they would be halved. This would eliminate the gain from duplicating this feature. I name the exponent \(-\lambda \sum_{j \neq i}^n SM(i,j)  \) the R exponent, for relatedness or correlation.</p>
+
+<h1>revenue distribution in practice</h1>
+
+<p>Below, I have made an interactive demo of the paper's revenue distribution method. The situation is as follows: A rental bike provider wants to know how many bikes are expected to be needed on a certain day. They are buying data in the data market to try to improve their prediction. Alex and Brody are both weather forecasters, and can supply features to the market. Alex and Brody have access to five features:
+- Temperature
+- Felt temperature (what the temperature feels like)
+- Wind speed
+- Weather situation (A categorical feature explaining if it's sunny, cloudy, rainy, or very rainy)
+- Humidity</p>
+<p>The demo is developed using data from the Kaggle dataset <a href="https://www.kaggle.com/datasets/harishkumardatalab/shared-bikes-demand-prediction" target="_blank">Shared Bikes Demand Prediction</a>. The similarity measure used is absolute Pearson correlation. Play around with it without robustness to replication first, try adding some features to Alex and Brody and see if you find the changes in payout distribution fair. Then, add in robustness to replication, and see if you find it fair then. Once you added in robustness to replication, you can also play around with the robustness parameter \(\lambda\) and see how it affects the fairness of the outcomes.</p>
+
+<p><div style="vertical-align:text-top;">
+Robustness to Replication: <label class="switch">
+  <input type="checkbox" id="robustness-checkbox" onclick='update_robustness()'>
+  <span class="slider round"></span>
+</label>
+</div>
+Robustness regularization parameter (λ)
+  <input type="number" min="0" max="5" value="1" step="0.1" id="robustness-slider" oninput="update_display()"></p>
+<p><table class="feature-table">
+  <tr>
+    <th> Alex </th> <td> <div id="info-feat-A-1"> 
+      <button onclick='add_feature_dialog("feat-A-1")'>
+        + Add Feature
+      </button>
+    </div> </td> <td> <div id="info-feat-A-2"> 
+      <button onclick='add_feature_dialog("feat-A-2")'>
+        + Add Feature
+      </button>
+    </div>  </td> <td> <div id="info-feat-A-3"> 
+      <button onclick='add_feature_dialog("feat-A-3")'>
+        + Add Feature
+      </button>
+    </div>  </td>
+  </tr>
+  <tr>
+    <th> Brody </th> <td> <div id="info-feat-B-1"> 
+      <button onclick='add_feature_dialog("feat-B-1")'>
+        + Add Feature
+      </button>
+    </div> </td> <td> <div id="info-feat-B-2"> 
+      <button onclick='add_feature_dialog("feat-B-2")'>
+        + Add Feature
+      </button> 
+    </div>  </td> <td> <div id="info-feat-B-3"> 
+      <button onclick='add_feature_dialog("feat-B-3")'>
+        + Add Feature
+      </button>
+    </div>  </td>
+  </tr>
+</table>
+<dialog id="dialog-feat-A-1" style="margin:auto;padding:5px;border-radius:5px;border:2px solid #aaaaaa;">
+  <select name="Feature" id="select-feat-A-1">
+    <option value="temp">Temperature</option>
+    <option value="atemp">Felt Temperature</option>
+    <option value="hum">Humidity</option>
+    <option value="windspeed">Wind Speed</option>
+    <option value="weathersit">Weather Situation</option>
+  </select>
+  <button autofocus onclick='add_feature_dialog_closed("feat-A-1")'>Add Feature</button>
+</dialog>
+        
+<dialog id="dialog-feat-A-2" style="margin:auto;padding:5px;border-radius:5px;border:2px solid #aaaaaa;">
+  <select name="Feature" id="select-feat-A-2">
+    <option value="temp">Temperature</option>
+    <option value="atemp">Felt Temperature</option>
+    <option value="hum">Humidity</option>
+    <option value="windspeed">Wind Speed</option>
+    <option value="weathersit">Weather Situation</option>
+  </select>
+  <button autofocus onclick='add_feature_dialog_closed("feat-A-2")'>Add Feature</button>
+</dialog>
+        
+<dialog id="dialog-feat-A-3" style="margin:auto;padding:5px;border-radius:5px;border:2px solid #aaaaaa;">
+  <select name="Feature" id="select-feat-A-3">
+    <option value="temp">Temperature</option>
+    <option value="atemp">Felt Temperature</option>
+    <option value="hum">Humidity</option>
+    <option value="windspeed">Wind Speed</option>
+    <option value="weathersit">Weather Situation</option>
+  </select>
+  <button autofocus onclick='add_feature_dialog_closed("feat-A-3")'>Add Feature</button>
+</dialog>
+        
+<dialog id="dialog-feat-B-1" style="margin:auto;padding:5px;border-radius:5px;border:2px solid #aaaaaa;">
+  <select name="Feature" id="select-feat-B-1">
+    <option value="temp">Temperature</option>
+    <option value="atemp">Felt Temperature</option>
+    <option value="hum">Humidity</option>
+    <option value="windspeed">Wind Speed</option>
+    <option value="weathersit">Weather Situation</option>
+  </select>
+  <button autofocus onclick='add_feature_dialog_closed("feat-B-1")'>Add Feature</button>
+</dialog>
+        
+<dialog id="dialog-feat-B-2" style="margin:auto;padding:5px;border-radius:5px;border:2px solid #aaaaaa;">
+  <select name="Feature" id="select-feat-B-2">
+    <option value="temp">Temperature</option>
+    <option value="atemp">Felt Temperature</option>
+    <option value="hum">Humidity</option>
+    <option value="windspeed">Wind Speed</option>
+    <option value="weathersit">Weather Situation</option>
+  </select>
+  <button autofocus onclick='add_feature_dialog_closed("feat-B-2")'>Add Feature</button>
+</dialog>
+        
+<dialog id="dialog-feat-B-3" style="margin:auto;padding:5px;border-radius:5px;border:2px solid #aaaaaa;">
+  <select name="Feature" id="select-feat-B-3">
+    <option value="temp">Temperature</option>
+    <option value="atemp">Felt Temperature</option>
+    <option value="hum">Humidity</option>
+    <option value="windspeed">Wind Speed</option>
+    <option value="weathersit">Weather Situation</option>
+  </select>
+  <button autofocus onclick='add_feature_dialog_closed("feat-B-3")'>Add Feature</button>
+</dialog></p>
+<p><table>
+  <tr>
+    <th>Total prediction gain</th> <td id="prediction-gain"></td>
+  </tr>
+  <tr>
+    <th>Total payout</th> <td id="total-payout"></td>
+  </tr>
+  <tr>
+    <th>Alex's payout</th> <td id="A-payout"></td>
+  </tr>
+  <tr>
+    <th>Brody's payout</th> <td id="B-payout"></td>
+  </tr>
+</table></p>
+<p>I think there are a whole wealth of takeaways here. Firstly, it is extremely obvious to see the issue that Agarwal et al. talk about regarding naïve Shapley values. Just try adding temperature as a feature for both Brody and Alex and see how the distribution of payout gets skewed if you add it again for either one.</p>
+<p>Secondly, it is clear that robustness by similarity as displayed here has a lot of issues. Try turning on robustness to replication and setting \(\lambda\) to 1 and giving just the temperature feature to Alex. Then add in humidity. Despite considerably increasing the total prediction quality gain for the buyer, Alex is now paid <i>less</i> than they were before. Maybe \(\lambda=1\) was too high? The original paper advises \(\lambda=log(2) \approx 0.693\). Setting this \(\lambda\) value does remove the example I just gave, but you will still run into the same issue with e.g. the features temperature and wind speed. </p>
+<p>There is another example that displays some problems, still with \(\lambda=log(2) \). Try adding in temperature, weather situation, and wind speed for alex. Now add wind speed in for Brody. Brody got some payout, but barely anything, only a couple of euros. Add it in again. And again. Alex and Brody are very likely in competition outside of this market, since they are both weather forecasters in a competitive market. Then, Brody might even be willing to sacrifice a slight portion of his own profit to reduce those of Alex. This incentivizes participants to add in data similar to their competitors' data, since they can thus reduce their profits. He would definitely, out of two situations with basically the same amount of profit, pick the situation where his competitor earned less. Since he never had the chance to earn more than 3.43€, he's fine sacrificing that tiny profit to sabotage the competition.</p>
+<h1>conclusion</h1>
+<p>Revenue distribution based on observational Shapley values and similarity penalties as worked out in the paper does not take us all the way to a functional data market. There are destructive strategy spaces opened for market participants, and many constructive decisions are disincentivized (like providing both the temperature and the wind speed as a single seller).</p>
+<p>There might be more issues with the revenue distribution method displayed in the paper that I have not investigated. Don't go shouting at Agarwal, Dahleh, and Sarkar, though. They already know all of these issues and probably way more than I have already dug into, and their paper is a masterpiece of research in the field of algorithmic data markets. This merely shows that there is still research to be done before algorithmic, auction-based data markets become a reality.</p>
+<p>I am slightly pivoting in thesis focus, so my next article will be about <a href="https://en.wikipedia.org/wiki/Online_machine_learning" target="_blank">Online Learning</a>. See you then!</p>
+
+
+<p><div style="display:flex;width:100%">
+ <div style="flex:1;margin:10px;text-align:left;" class="btwn-link">
+  <a href="2023-10-13-a-simple-data-auction.html"> &#171; data markets III: a simple data auction</a>
+ </div>
+ <div style="flex:1;margin:10px;text-align:right" class="btwn-link">
+  <a href="2024-02-18-online-learning.html"> data markets V: online learning &#187; </a>
+ </div>
+</div></p>
+<h1>references</h1>
+
+<p><sup id="ref-home-1"><a href="#ref-1">1</a></sup>: Anish Agarwal, Munther Dahleh, and Tuhin Sarkar. 2019. A Marketplace for Data: An Algorithmic Solution. In Proceedings of the 2019 ACM Conference on Economics and Computation (EC '19). Association for Computing Machinery, New York, NY, USA, 701–726. <a href="https://doi.org/10.1145/3328526.3329589" target="_blank">https://doi.org/10.1145/3328526.3329589</a></p></div></body></html>

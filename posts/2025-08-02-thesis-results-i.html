@@ -1,0 +1,459 @@
+<html><head><title>My Blog</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0/css/bootstrap-grid.min.css" integrity="sha512-vWtGaoxGWtwzJnP6e3YbBCE2BAEbldcuL4TVO3IbW/IFocN/XxuBv3Fuqm7t+I4eZ7p8L9iBElSUqXQUbQmarA==" crossorigin="anonymous" referrerpolicy="no-referrer">   <link rel="stylesheet" href="/assets/style.css"></head><body><header><nav><a href="/"><div class="logo">Carl Frederik Grønvald</div></a>  <ul><li><a href="/about.html">about</a>  </li></ul></nav></header><div class="container-fluid"><h1 class="title"> data markets post-thesis I: online regression</h1>
+<p><script type="text/javascript" id="MathJax-script" async
+src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"> </script></p>
+<p><script language="JavaScript" id="math" src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.3.1/math.js"></script></p>
+
+<p><div style="display:flex;width:100%">
+ <div style="flex:1;margin:10px;text-align:left;" class="btwn-link">
+ <a href="2024-02-18-online-learning.html"> &#171; data markets V: online learning</a>
+ </div>
+ <div style="flex:1;margin:10px;text-align:right" class="btwn-link">
+ </div>
+</div></p>
+<p>Hi! I originally started writing this blog post while I was writing my thesis.
+However, writing a thesis turned out to take a lot of time and effort - and
+somehow, one more writing project was not the highest on my list. Now, I handed
+in my thesis and took the time I needed away from the project.</p>
+<p>My thesis was about online regression markets with varying feature spaces. That
+sounds complicated but let's break down those words, ordered by importance:</p>
+<p><ol>
+  <li><b>Markets </b>- people are trading something, in this case they are trading <i>data</i> for use in regressions
+</li>
+  <li><b>Regression</b> - Using data to train predictive models and making predictions with those models on new data</li>
+  <li><b>Online </b>- Referring to the fact that we're using online regression, which is regression where
+    the regressor is continuously updated as new information becomes available (see my <a href="2024-02-18-online-learning.html" target="_blank">last blog
+    post</a>)</li>
+  <li><b>Varying feature spaces</b> - Usually regression is done on a fixed ste of features. In my
+  thesis, however, I let the set of features change over time, with several implications
+  regarding both markets and regression problems. </li>
+</ol></p>
+<p>I am going to semi-cleanly split the results into two posts. This first part will be about online
+regression, or in fact supervised online learning in general, with varying features over time. The second part
+will be about the implications of varying features for data markets. Online learning with varying
+features over time turns out to already have a name in literature, known as <i>Utilitarian Online
+Learning</i>.</p>
+<h1>utilitarian online learning</h1>
+<p>Utilitarian Online Learning is a term first coined in a survey article from 2023<sup id="ref-home-3"><a href="#ref-3">3</a></sup>. It
+refers to any kind of machine learning that fulfills three criteria:
+<ol>
+  <li>It's online - The model is updated continuously as new data becomes available </li>
+  <li>It natively handles varying feature spaces, i.e. it works just fine if the set of features
+   available changes over time, and it might at one time step receive five features and at the next
+   time step receive eleven other features, and it'll be fine with that. </li>
+  <li>It's computationally pretty fast</li>
+</ol></p>
+<p>The third criterion is there to avoid lumping in things like
+retraining a batch regression mechanism at every time step using only the
+features present at that time step. While that is indeed a kind of online
+learning, and it does natively handle varying features, it's computationally
+VERY expensive, so it's only rarely useful in
+the situations utilitarian online learning
+models are intended for.</p>
+<p>The survey article includes comparisons of a few algorithms for
+classification tasks. I readily decided to use the OCDS algorithm initially
+from the paper He et al. (2019)<sup id="ref-home-4"><a href="#ref-4">4</a></sup>, since it is fairly simple and seemed to be easily
+converted to a regression mechanism, if needed. I then tried implementing the
+OCDS algorithm myself, so that I could compare its results to my own.</p>
+<h1>issues with OCDS</h1>
+<p>As I started implementing OCDS, I ran into some confusion with the data in the
+original OCDS paper. I also could not reconstruct the performance that this
+original paper achieved. I don't have any good explanations for why this
+happened, and unfortunately the authors of the OCDS paper could not share the
+code that generated their results since it was undergoing a patenting process.
+Therefore, I skipped on using OCDS and only compared to its results. I only discuss this slightly more in the results section, but if anyone involved in OCDS wants to tell me what's going on, that would be super welcome :)</p>
+<h1>my own models</h1>
+<p>As I realized I couldn't use OCDS, I decided to implement some models of my
+own. I developed two models, and they are both based on pretty simple concepts.
+Both are essentially based on linear regression.</p>
+<p>Linear regression is essentially an optimization problem; we have a set of
+observations X and a set of targets y, and we're then looking for the coefficients a
+that gets the value of \(AX\) as close as possible to \(y\), measured by
+the square difference. Mathematically, this can be expressed as</p>
+<p>$$
+  \underset{a}{min} \sum_i^N (a \cdot x_i - y_i)^2
+$$</p>
+<p>Here, i understand \(a\) as a vector of coefficients, \(y\) as a vector, and
+\(X\) as a matrix. \(x_i\) is a single row of the matrix \(X\), and there are
+\(N\) total rows. The optimum point of this optimization problem can be
+found analytically. You can transpose some matrices, multiply some matrices
+together, and then invert some things, and you get the analytically optimal
+vector of coefficients \(a\). I've referred before to this <a href="https://www.oranlooney.com/post/ml-from-scratch-part-1-linear-regression/" target="_blank">blog
+post</a>
+which I think is great if you're interested in the basics of linear regression.</p>
+<p>It can however also be solved in another way,
+which you have probably heard of before. If
+you think of the sum  as a function of \(a\),
+\(\Phi(a) = \sum_i^N (a \cdot x_i - y_i)^2 \),
+you can follow the gradient of the function
+\(\nabla_a \Phi(a) \) backwards towards the
+minimum of the function. In essence, you look
+at the error locally and update \(a\) to
+minimize the error. This is known as gradient
+descent, which is the method neural networks
+also use to update their coefficients (a.k.a
+weights).</p>
+<p>For the linear regression problem above, we would take the gradient with
+regards to the coefficients \(a\), i.e.</p>
+<p>$$
+  \nabla_a \sum_i^N (a \cdot x_i  - y_i )^2 = 2 x_i(a \cdot x_i  - y_i)
+$$</p>
+<p>From here on out I'll refer to the objective function as \(\Phi\), so we
+minimize \(\Phi\) and can then refer to the gradient as \(\nabla_a \Phi\). To
+solve the problem for the optimal parameters \(a^*\), we can then iteratively update our estimate, which
+we'll denote \(\hat a_t\) at a given time step t, by following the gradient.
+We then get an update step</p>
+<p>$$
+  \hat a_{t+1} = \hat a_t - \tau  \nabla_a \Phi
+$$</p>
+<p>Where \(\tau\) is a step size. We're just going to use fixed step sizes, but
+one could feasibly reduce this step size over time. In fact, for any convex
+problem, reducing step sizes according to some specific rules will guarantee convergence.</p>
+<p>Now we can iteratively walk towards the optimum by following the
+gradient. Right now we calculate the gradient based on the entire dataset, but
+what if we instead only took a subset of the dataset at every time step, and
+calculating the gradient based on just that? This will in fact also converge to
+the optimum solution, under some conditions, and is known as stochastic
+gradient descent. We can do this using just a single row of the dataset, or
+observation, at a time - and now we might see how we can create an iteratively
+updating model that updates as new information comes in. We update the model at
+every time step using that new information to calculate our gradient. This is
+the core method of the two online models I have developed.</p>
+<h2>online linear model (OLM)</h2>
+
+<p>So now, we know the central concept of updating an online model using
+stochastic gradient descent. Let's look at how exactly a linear regression
+model would look if it were to learn iteratively from observations that come in
+one at a time, using stochastic gradient descent for its update.</p>
+<p>So, at time step \(t\), we receive the data point composed of features \(x_t\)
+and true label \(y_t\). When we come to this time step, we have an estimate of
+our coefficients \(\hat a_t\), and we can then produce an estimate of the
+true label \(\hat y_t\). Our gradient based on this single time step will be</p>
+<p>$$
+  \nabla_{\hat a} \Phi_t = \nabla_{\hat a} (\hat a_t x_t - y_t)^2 =
+  2x_t(\hat a_t x_t - y_t) = 2 x_t(\hat y_t - y_t)
+$$</p>
+<p>We then have the pretty simple update step of</p>
+<p>$$
+  \hat a_{t+1} = \hat a_t - \tau 2 x_t (\hat y_t - y_t)
+$$</p>
+<p>This gives us a linear regression model that
+we can use in an online fashion, i.e. updating
+it every time we get new observations. It
+doesn't get us all the way to the Online
+Linear Model, though, since it also must
+handle missing features. </p>
+<p>Usually when performing regression, we'll
+normalize our features so that they have a
+mean of zero. This mean is also the expected
+value of any feature absent of other
+information. When a feature is missing, the
+simplest way to handle it is to assume that
+the feature has the value of its mean, known
+as mean imputation. Then, if we always
+normalize input features for this model, we
+can just set missing features to zero. This
+actually means that they straight up disappear
+from the calculation - both the term in the
+sum determining \(\hat y\) and the gradient
+for the coefficient on the feature will be
+zero, so computationally, we can just ignore
+missing features.</p>
+<p>Then, we have an online linear regression model that can handle missing
+features, using the following steps at each iteration:</p>
+<p><ol>
+  <li>Get observation \(x_t\)</li>
+  <li>Ignore any missing features; initialize
+    coefficients of previously unseen features
+    to zero.</li>
+  <li>Calculate predicted value \(\hat y_t\) based on current coefficent vector \(\hat a_t\)</li>
+  <li>Calculate updated coefficient estimates based on true label \(y_t\) using gradient \(\nabla_{\hat a} \Phi = 2 x_t(\hat y_t - y_t) \)</li>
+</ol></p>
+
+<p><div style="width:100%;background:#dddddd;border-radius:10px;border:2px solid #aaaaaa;font-family: Courier New, monospace;padding:8px">
+  <b>OLM Pseudocode</b>
+  <hr>
+  a = empty array <br/>
+  for t in T <br/>
+  &nbsp;&nbsp; for i in features_present(t) <br/>
+  &nbsp;&nbsp;&nbsp;&nbsp; if len(a) &lt; i: a.append(0) <br/>
+  &nbsp;&nbsp; for i in features_missing(t) <br/>
+  &nbsp;&nbsp; y_hat_t = dot(x_t, a) <br/>
+  &nbsp;&nbsp; a = a - 2x_t(y_hat_t - y_t) 
+</div></p>
+<p>Below is a figure representing the
+behavior of predicting and fitting the
+OLM model for three time steps. It
+shows how features are only used when
+they are present, and the weights are
+also only updated when the features are
+present, then.</p>
+<p><img src="/assets/images/thesis_results_i_olm.png" class="wide-img"></p>
+<h2>online linear model with subregressions (OLM-S)</h2>
+<p>The Online Linear Model just handles missing features by
+mean imputation. This is not very informative, and we have all of these other
+features lying around that might be correlated with the feature we're missing.
+This model instead reconstructs missing features using another level of online
+linear regression models. </p>
+<p>So basically, at every time step where a given feature is present, an online
+linear regression model is fitted using that feature as the target and the rest
+of the features as features. It's kind of like every feature has an associated
+sub-model, or subregression, hence the name. I've demonstrated the overall
+concept below:</p>
+<p><img src="/assets/images/thesis_results_i_olms.png" class="wide-img"></p>
+<p>Here, we see how features are used for
+prediction. On the other hand, for
+fitting, all the present features have
+their subregressions using themselves
+as a target whenever they are present. As an example, below are explanations for what happens with feature two at every time step in the above example:</p>
+<p><ol>
+  <li>Features 1 and 2 are present at this time step. An OLM model with feature 2 as the target is initialized, and it is trained using feature 1 as the features and feature 2 as the target.</li>
+  <li>Feature 2 is now missing, but feature 1
+    and 3 are present. Feature 3 has never
+    been seen before by the OLM model for
+    feature 2, so it has its coefficient
+    initialized to zero. Then, feature 2 is
+    reconstructed using only feature 1, and
+    the reconstructed feature 2 is passed
+    along with feature 1 and 3 to the overall
+    regression.</li>
+  <li>Feature 1 is missing, but feature 2 and 3 present. Feature 2 is then not reconstructed, but its subregression is trained using feature 2 as a target and feature 3 as a feature.</li>
+</ol></p>
+<p>The update steps for each online linear model are then the same as
+before for the OLM.</p>
+
+<h2>modifications for classification</h2>
+
+<p>So far, we've only looked at least-squares
+regression problems. However, OCDS is a
+classification method, so I also want to look
+at the performance of these models for
+classification. Luckily, we can pretty easily
+convert these models to classification using
+the approach of <a href="https://www.v7labs.com/blog/logistic-regression" target="_blank">Logistic
+Regression</a>.
+This approach applies a nonlinear activation
+function on the output of the model known as
+the logistic function or Sigmoid function, \(
+h(x)=\frac{1}{1+e^{-x}} \). This function
+essentially views the input as the logarithm
+of an odds ratio, and converts log-odds to
+probability. Any real number is a valid
+log-odds ratio, so it's essentially a way to
+convert any number on the real number line to
+a probability between 0 and 1. The predicted
+probability of the model is then \( \hat y =
+h(a \cdot x) \), and the predicted label is 1
+if \(\hat y > 0.5\), or 0 if \( \hat y < 0.5
+\). The minimized loss function is Binary
+Cross-Entropy (BCE),</p>
+<p>$$
+  \Phi = \sum_t (y_t \log(\hat y_t) + (1 - y_t) \log(1-\hat y_t))
+$$</p>
+<p>BCE comes from the log-likelihood function of
+the Bernoulli distribution. Basically, it
+comes from assuming that every true label
+\(y\) comes from a distribution where it has
+probability \(\hat y\) of being 1 and \(1-\hat
+y\) of being 0. That's a very surface-level
+understanding, but otherwise check out <a href="https://web.stanford.edu/class/archive/cs/cs109/cs109.1206/lectureNotes/LN20_parameters_mle.pdf" target="_blank">this
+Stanford
+pdf</a>
+or <a href="https://online.stat.psu.edu/stat504/lesson/1/1.5" target="_blank">this PennState
+lesson</a>.
+This is to say that BCE is well founded, and
+based on Maximum Likelihood Estimation.</p>
+<p>This combination of loss function and nonlinear activation function happens to
+give an extremely simple single time step gradient of</p>
+<p>$$
+  \nabla_a \Phi = x_t (\hat y_t - y_t)
+$$</p>
+<p>Which happens to be almost identical to the gradient of the parameters for
+linear regression expressed in \(x_t\), \(\hat y_t\), and \(y_t\), except for a
+power of two. The fact that the gradient turns out simple and easily calculable
+is a big reason why the sigmoid function is so often chosen for the final
+activation function of neural classification models.</p>
+<h1>classification results</h1>
+
+<p>Since the models in the literature are mostly
+classification models, I first tested my
+models on classification problems to test
+their performance compared to the models found
+in the survey article. The tests simulate the
+core problems these models are intended for,
+i.e. receiving data in an online fashion with
+some amount of missing data that randomly
+changes every time step. The pseudocode for
+running an online model shown below:</p>
+<p><div style="width:100%;background:#dddddd;border-radius:10px;border:2px solid #aaaaaa;font-family: Courier New, monospace;padding:8px">
+  <b>online model algorithm</b>
+  <hr>
+  for each time step <br/>
+  &nbsp;&nbsp; 1. Receive observation \(x_t\) missing some amount of data<br/>
+  &nbsp;&nbsp; 2. Make prediction using model \( \hat y_t = m(x_t) \)<br/>
+  &nbsp;&nbsp; 3. Receive true label \(y_t\), note accuracy <br/>
+  &nbsp;&nbsp; 4. Update model coefficients <br/>
+</div></p>
+<p>The specific test we will make will use datasets from the <a href="https://archive.ics.uci.edu/" target="_blank">UCI databank</a><sup id="ref-home-1"><a href="#ref-1">1</a></sup>. Every time step will have 50% of data removed by random choice.</p>
+<p>Apart from testing my models and the models
+from the survey article, I also found a
+theoretical maximum accuracy for these models.
+This theoretic maximum is the accuracy of a
+logistic regression model, but trained
+insample on the dataset with no observations
+removed. I.e., where other models must
+iteratively predict and improve their
+coefficients one step at a time, this model is
+trained on the entire dataset \(X\) with no
+missing data, before then predicting on the
+entire dataset to create the full prediction
+vector \(\hat y\). The model will thus basically maximize accuracy.<sup id="ref-home-2"><a href="#ref-2">2</a></sup>. I denote this model
+'Logistic UB' for Upper Bound.</p>
+<p>I've put the results from my models and the models from literature in the table
+below. Note that there are two reported values for OCDS, one from the OCDS
+paper itself, and one from my reimplementation of OCDS. The OLVF paper doesn't
+report results for all the used datasets, which is why some cells have
+N/A. I've marked the best performing model in bold, ignoring the OCDS paper
+results for reasons that will become apparent, and the insample optimal model
+for reasons I hope are obvious</p>
+<p><table>
+  <tr>
+    <th>Mean Accuracy</th><th>OCDS (paper)</th><th>OLVF</th><th>OVFM</th><th>OCDS (mine)</th><th>OLM</th><th>OLM-S</th><th>Logistic UB</th>
+  </tr>
+  <tr>
+    <td>australian</td><td>0.886</td><td>N/A</td><td><b>0.783</b></td><td>0.753</td><td>0.767</td><td>0.768</td><td>0.858</td>
+  </tr>
+  <tr>
+    <td>ionosphere</td><td>0.906</td><td>0.774</td><td>0.752</td><td>0.748</td><td><b>0.795</b></td><td>0.787</td><td>0.937</td>
+  </tr>
+  <tr>
+    <td>german</td><td>0.827</td><td>0.649</td><td>0.681</td><td>0.701</td><td>0.705</td><td><b>0.709</b></td><td>0.755</td>
+  </tr>
+  <tr>
+    <td>wdbc</td><td>0.951</td><td>0.903</td><td>0.918</td><td>0.921</td><td><b>0.938</b></td><td>0.935</td><td>0.993</td>
+  </tr>
+  <tr>
+    <td>wbc</td><td>0.939</td><td>0.913</td><td>0.922</td><td>0.934</td><td>0.938</td><td><b>0.941</b></td><td>0.961</td>
+  </tr>
+  <tr>
+    <td>magic04</td><td>0.886</td><td>0.644</td><td><b>0.762</b></td><td>0.732</td><td>0.732</td><td>0.743</td><td>0.791</td>
+  </tr>
+  <tr>
+    <td>kr-vs-kp</td><td>0.912</td><td>N/A</td><td>0.687</td><td>0.733</td><td>0.750</td><td><b>0.753</b></td><td>0.960</td>
+  </tr>
+  <tr>
+    <td>credit-a</td><td>0.926</td><td>N/A</td><td>0.760</td><td>0.766</td><td><b>0.783</b></td><td>0.780</td><td>0.864</td>
+  </tr>
+</table></p>
+<p>(sorry, people on mobile) Okay, so what do we notice?</p>
+<p><ol>
+  <li>The OLM and OLM-S models are performing super well, OVFM is only occasionally better.</li>
+  <li>except for OCDS, which reports way higher results. However, OCDS also outperforms the
+    theoretical optimum insample predictor.</li>
+  <li>OLM and OLM-S are almost identical in performance.</li>
+</ol></p>
+<p>I don't think it's possible for an online
+model learning iteratively to beat an insample
+trained logistic regression model, so I think
+the test method in the OCDS paper might have
+been different from the one I present and
+other papers use. I take these results as a
+good indication that OLM and OLM-S are really
+pretty good utilitarian online models, even
+though they are very simple. However, I also
+get the indication that the reconstruction
+step from OLM-S does not add anything to the
+classification accuracy.</p>
+<p>I've only covered the 50% missing data case, and my results indicated
+that some of these other models were better at 75% missing data, but I don't
+want to bombard you guys with too many graphs and tables, so we'll leave
+classification at this.</p>
+<h1>regression results</h1>
+<p>None of the other methods have implemented a regression variant, so from here
+on out I can only compare OLM and OLM-S. I have two questions that I want to answer:</p>
+<p><ol>
+  <li>How does OLM and OLM-S compare? Does the OLM-S reconstruction step actually
+   improve performance for regression?
+</li>
+  <li>How does the correlation between features affect the performance of these
+    models?</li>
+</ol></p>
+<p>I tested generally using the same process as before. However, I added another
+thing: When using online models, you can often know several features forwards
+in time without knowing the labels, e.g. you just received \(x_{55}\) for
+time step 55, but you only know \(y_{30}\). There are 25 time steps between the
+two, which I'll denote as a forecast horizon of 25. When testing the methods,
+I'll vary the forecast horizon.</p>
+<p>My test data here is completely synthetic; \(X\) is multivariate gaussian
+noise, and \(y\) is then given as a linear function of \(X\) with coefficients
+\(\alpha\) and some added gaussian noise. Mathematically,</p>
+<p>$$
+  x_t \sim \mathcal N (\mathbf 0, \Sigma) \, \forall t, \,\,\,\, y_t = \alpha \cdot x_t + \mathcal N(0, 1) \, \forall t
+$$</p>
+<p>I parameterize the covariance matrix for \(X\) by a single parameter \(\rho\)
+less than 1 to control the correlation between features. The covariance matrix
+is given by \(\Sigma_{i,j} = \rho  ^{\min(|i-j|, N-|i-j|)}\). This looks
+complicated, but it really isn't. It's a matrix where the covariance between
+two features is given by how far they are from each other, i.e. feature 2 and 4
+will have a smaller covariance than feature 2 and 3. It is then forced to be
+symmetric, so if there's e.g. 5 features, the correlation between feature 0 and
+1 is the same as between feature 0 and 4.</p>
+<p>I tested on a synthetic dataset with 200 time
+steps. I used the MSE as my metric, since this
+is the loss function minimized by the
+regressors. I'll also set the forecast horizon
+to 25 time steps. I also created a regression
+variant of OCDS and included it as well.</p>
+<p><img src="/assets/images/thesis_results_i_mse_vs_correlation.png" style="width:80%;display:block;margin:auto;"></p>
+<p>We see that OLM and OLM-S perform the
+same when correlations are low, but
+OLM-S starts outperforming OLM as the
+correlation increases. We see also that
+the reconstruction step of OLM-S really
+starts to improve
+forecasting accuracy once the correlation gets higher. That's a nice
+confirmation that it's even worth it to do, which it didn't seem to be for
+classification. OCDS doesn't perform well at
+any point.</p>
+<p>I also tested different forecasting horizons using the same method, as shown below:</p>
+<p><img src="/assets/images/thesis_results_i_time_horizons.png" style="width:80%;display:block;margin:auto;"></p>
+<p>This is with a correlation of 0.99. We
+see that as the forecast horizon
+increases, OLM-S starts performing a
+lot better, indicating it can draw more
+information out of fewer observations. </p>
+<p>So that is pretty cool. I am surprised there
+isn't more literature in this area for me to
+compare to. If anyone knows some other online
+regression methods for varying feature spaces
+I can test against, please let me know. I'd
+love to see how these size up. Note that for
+the next step, constructing fair markets based
+on these regression methods, I needed
+convex methods. This is why non-convex online
+regressors such as <a href="https://arxiv.org/abs/1406.2673" target="_blank">Mondrian
+forests</a> were
+excluded.</p>
+
+<h1>conclusion</h1>
+<p>Okay, now we've established some models that we can use for regression in an
+online fashion when the amount of available features varies freely in time. The
+existing literature wasn't of much help, but we constructed two models, that I
+would say are very natural, to solve the problem.</p>
+<p>This is everything I needed in terms of models for my thesis, and I could then
+move on to trying to construct data markets for this situation. We'll move on
+to that next time :)</p>
+<p><div style="display:flex;width:100%">
+ <div style="flex:1;margin:10px;text-align:left;" class="btwn-link">
+ <a href="2024-02-18-online-learning.html"> &#171; data markets V: online learning</a>
+ </div>
+ <div style="flex:1;margin:10px;text-align:right" class="btwn-link">
+ </div>
+</div></p>
+<h1>references</h1>
+
+<p><sup id="ref-1"><a href="#ref-home-1">1</a></sup> Specifically, the dataset UCI IDs are as follows: australian:143; ionosphere:52; german:144; wdbc:17; wbc:15; magic04:159; kr-vs-kp:22; credit-a:27.</p>
+<p><sup id="ref-2"><a href="#ref-home-2">2</a></sup> Actually, the accuracy is not necessarily maximized, see e.g. <a href="https://stats.stackexchange.com/questions/258166/good-accuracy-despite-high-loss-value" target="_blank">this stackexchange post</a>. It is however a very good proxy.</p>
+<p><sup id="ref-3"><a href="#ref-home-3">3</a></sup> Yi He, Christian Schreckenberger, Heiner Stuckenschmidt, and Xindong Wu. Towards utilitarian online learning - a review of online algorithms in open feature space. <i>Ijcai International Joint Conference on Artificial Intelligence</i>, 2023-:6647–6655, 2023. ISSN
+10450823.</p>
+<p><sup id="ref-4"><a href="#ref-home-4">4</a></sup> Yi He, Baijun Wu, Di Wu, Ege Beyazit, Sheng Chen, and Xindong Wu. Online learning from capricious data streams: A generative approach. <i>Ijcai International Joint Conference on Artificial Intelligence</i>, 2019-:2491–2497, 2019. ISSN 10450823. doi:
+10.24963/ijcai.2019/346</p></div></body></html>
