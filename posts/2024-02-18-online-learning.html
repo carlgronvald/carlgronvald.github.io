@@ -1,35 +1,27 @@
 <html><head><title>My Blog</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0/css/bootstrap-grid.min.css" integrity="sha512-vWtGaoxGWtwzJnP6e3YbBCE2BAEbldcuL4TVO3IbW/IFocN/XxuBv3Fuqm7t+I4eZ7p8L9iBElSUqXQUbQmarA==" crossorigin="anonymous" referrerpolicy="no-referrer">   <link rel="stylesheet" href="/assets/style.css"></head><body><header><nav><a href="/"><div class="logo">Carl Frederik Grønvald</div></a>  <ul><li><a href="/about.html">about</a>  </li></ul></nav></header><div class="container-fluid"><h1 class="title"> data markets V: online learning</h1>
 <p><script type="text/javascript" id="MathJax-script" async
   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-</script></p>
-<p><script language="JavaScript" id="math" src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.3.1/math.js"></script></p>
-<p><script src="/assets/js/online_learning.js"></script></p>
-<p><div style="display:flex;width:100%">
+</script></p><p><script language="JavaScript" id="math" src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.3.1/math.js"></script></p><p><script src="/assets/js/online_learning.js"></script></p><p><div style="display:flex;width:100%">
  <div style="flex:1;margin:10px;text-align:left;" class="btwn-link">  
  <a href="2023-12-10-revenue-distribution.html"> &#171; data markets IV: revenue distribution</a>
  </div>
  <div style="flex:1;margin:10px;text-align:right" class="btwn-link">
  <a href="2025-08-02-thesis-results-i.html"> thesis results I: online regression &#187; </a>
  </div>
-</div></p>
-<p>Hello! Today we are looking into Online Machine Learning. Classically, machine learning works by using a set of training
+</div></p><p>Hello! Today we are looking into Online Machine Learning. Classically, machine learning works by using a set of training
 data to train a predictor, and this predictor is then used on new data as it comes in. In online machine learning, the
 predictor is instead continuously trained as new data is made available. This can be done for several reasons, e.g.  if
 you know that your underlying distribution is changing over time. An example task could be predicting a house price
 based on things like its square footage, the number of rooms it contains, and similar. A non-online method would find a
 lot of data on this problem and use this to train a predictor, while an online method would do that too, but
-additionally continually train on new house sales as they appear.</p>
-<p>I will implement an online linear regression market mechanism with a forgetting mechanism known as exponential
+additionally continually train on new house sales as they appear.</p><p>I will implement an online linear regression market mechanism with a forgetting mechanism known as exponential
 forgetting. A forgetting mechanism makes the algorithm forget old observations over time, and is useful if we expect the
-distribution of our data to change over time. This is just one of many different online machine learning mechanisms.</p>
-<h1>online learning & markets</h1>
+distribution of our data to change over time. This is just one of many different online machine learning mechanisms.<h1>online learning & markets</h1></p>
 <p>Online learning methods can be integrated in a regression market structure like the market structures we have discussed
 so far. Pinson et al. (2022)<sup id="ref-home-3"><a href="#ref-3">3</a></sup> gives an introduction to how these methods work, as well as use
 cases within the wind energy market. I will coopt their method for constructing a market with an online regression
 method. They present several ways of feature pricing, but most natural is the use of the shapley value as I discussed in
-my last post. I will operate here on observational Shapley values, which are Shapley fair, but are not robust to replication, as we learned in my last post.</p>
-<h2>utilitarian online learning</h2>
-
+my last post. I will operate here on observational Shapley values, which are Shapley fair, but are not robust to replication, as we learned in my last post.<h2>utilitarian online learning</h2></p>
 <p>With online regression methods in a market situation, you might have a
 situation where one of your data suppliers does not always provide data. This
 presents an interesting problem for the online regression method: How do we
@@ -39,97 +31,80 @@ deals with varying feature spaces, i.e. the same features aren't available at
 all points in time. These methods can be used for online regression situations
 where you use data from sources that  isn't always available. You could e.g. be
 using input from an environmental microphone on the street somewhere in a city,
-but the microphone might be down one day and thus not supplying information. </p>
-<p>There is a recent survey article by He et. al (2023)<sup id="ref-home-1"><a href="#ref-1">1</a></sup> that goes through
+but the microphone might be down one day and thus not supplying information. </p><p>There is a recent survey article by He et. al (2023)<sup id="ref-home-1"><a href="#ref-1">1</a></sup> that goes through
 several common utilitarian online learners that you may find interesting if you
 think online regression could be useful for you. I won't dive further into this
 at this time, but I will in the future dive into the OCDS algorithm by He et.
 al (2019)<sup id="ref-home-3"><a href="#ref-3">3</a></sup> specifically, which is a linear classifier that reconstructs
-features based on feature correlations.</p>
-<h1>linear regression</h1>
-
+features based on feature correlations.<h1>linear regression</h1></p>
 <p>If you don't know the mathematics of linear regression, the idea is basically
 to find a set of parameters \( \hat{\mathbf{\beta}} \) to find a lienar
 function of your observed features that in your observed datapoints
 \(\mathbf{X}\) is as close as possible to the observed target value
 \(\mathbf{y}\). Here's a <a href="https://www.oranlooney.com/post/ml-from-scratch-part-1-linear-regression/" target="_blank">great blog
-post</a>
-about linear regression if you'd like to learn more about its theoretical
+post</a></p>
+<p>about linear regression if you'd like to learn more about its theoretical
 underpinnings. Either way, we're going to start with a quick brush up on linear
-regressions.</p>
-<p>So, let's say we have our datapoints in the matrix \(\mathbf{X}\). Every point we get in \(\mathbf{x_t}\) comes as a
-vector of values for each feature \(i\), so \(\mathbf{x_t} = </p>
-<p>$$
+regressions.</p><p>So, let's say we have our datapoints in the matrix \(\mathbf{X}\). Every point we get in \(\mathbf{x_t}\) comes as a
+vector of values for each feature \(i\), so \(\mathbf{x_t} = [ x_{t,1}, x_{t,2}, ..., x_{t,i}, ..., x_{t,m}]\), where
+\(m\) is the number of features. Each point also has an associated \(y_t\), which is the value we want to approximate
+with our linear function. We're minimizing the square of the difference between our function value and the true
+value \(y_t\),
+\(|f(\mathbf{x_t}) - y_t|^2\) for all t, i.e. the sum of the square differense. The difference \(f(\mathbf(x_t))-y_t\)
+is what is known as the residual, so squaring it gives the square residual, thus another name for linear regression, the
+line minimizing the residual sum of squares. The minimization problem is given in matrix notation as $$
   \underset{f}{min}|f(\mathbf{X}) - \mathbf{y}|^2
 $$</p>
 <p>Since \(f\) is linear, we can describe it just based on a vector of coefficients \(\mathbf{\beta}\). The expression can
-be instead described as </p>
-<p>$$
+be instead described as $$
   \underset{\mathbf{\beta}}{min}|\mathbf{X}\mathbf{\beta} - \mathbf{y}|^2
-$$ </p>
-<p>It turns out that there is a very simple solution to this problem. In fact, using some basic optimization theory and
-looking at the derivatives of the equation, one would find that at the optimum value for \(\mathbf{\beta}\)</p>
-<p>$$
+$$ </p><p>It turns out that there is a very simple solution to this problem. In fact, using some basic optimization theory and
+looking at the derivatives of the equation, one would find that at the optimum value for \(\mathbf{\beta}\)$$
   \mathbf{X}^T\mathbf{X} \mathbf{\beta} = \mathbf{X}^T \mathbf{y}
 $$</p>
 <p>We give a new name to the matrix, \(\mathbf{M}=\mathbf{X}^T\mathbf{X}\). Then, the solution to the line-of-best-fit when
-minimizing sum square error is defined by the coefficients \(\mathbf{\beta}\),</p>
-<p>$$
+minimizing sum square error is defined by the coefficients \(\mathbf{\beta}\),$$
   \mathbf{\beta} = \mathbf{M}^{-1} \mathbf{X}^T \mathbf{Y}
 $$</p>
-<p>And that was a crash course in linear regression.</p>
-<h1>online linear regression</h1>
+<p>And that was a crash course in linear regression.<h1>online linear regression</h1></p>
 <p>Linear regression can be done fairly easily in an online fashion. We realize that our regression is actually pretty much
 defined by just our two values \(\mathbf{M}\) and \(\mathbf{\beta}\). We then realize that we can just update these as we
-move along in time.</p>
-<p>We first choose some subset of our data that we already know as base data that we use for initialization where we
+move along in time.</p><p>We first choose some subset of our data that we already know as base data that we use for initialization where we
 perform a direct linear regression. To perform this linear regression, we construct a matrix
 \(\mathbf{M}_{init}= \mathbf{X}_{init}^T \mathbf{X}_{init}\). We then calculate our initial parameters
-\(\mathbf{\beta}_{init}=\mathbf{M}^{-1}\mathbf{y}\). </p>
-<p>Now, to get into the online setting, we'll update our matrix \(\mathbf{M}\) and our parameters \(\mathbf{\beta}\) every
+\(\mathbf{\beta}_{init}=\mathbf{M}^{-1}\mathbf{y}\). </p><p>Now, to get into the online setting, we'll update our matrix \(\mathbf{M}\) and our parameters \(\mathbf{\beta}\) every
 time step. First, let's think about what to do about the \(\mathbf{M}\) matrix. We can actually define an \(\mathbf{M}\) matrix for
 just a single observation, \(\mathbf{m_t} =  \mathbf{x_t}^T \mathbf{x_t}\). Then, we can have a running matrix
 \(\mathbf{M_t}\) that gets updated each iteration, we could e.g. update it as \(\mathbf{M_t}= \mathbf{M_{t-1}} +
-\mathbf{m_t}\), with \(\mathbf{M_0}=\mathbf{M}_{init}\). We're not going to update it exactly like that, since this would retain all former information at every update. We actually want to forget some information, since we want our regression to adapt to a changing underlying distribution. So we'll introduce a <i>memory factor</i>, \(\lambda\) (note that this memory factor is confusingly known as the <i>forgetting rate</i> in the Pinson paper). Then, we'll perform the update as</p>
-<p>$$\mathbf{M_t} = \lambda \mathbf{M_{t-1}} + \mathbf{m_t}$$</p>
-<p>For the full update, we'll actually perform something know as <a href="https://en.wikipedia.org/wiki/Newton%27s_method" target="_blank">Newton-Raphson</a>, since there is no simple way like this to update the parameters \(\mathbf{\beta}\). This will also allow us to minimize other loss functions than the sum of square residuals (see the Pinson paper if this interests you). The full update goes as follows:</p>
-<p>First, you calculate the residuals</p>
-<p>$$\mathbf{\epsilon_{t}} = y_t - \mathbf{\beta}^T_{t-1}{\mathbf{x}}_{t}$$</p>
-<p>Then, you update the matrix \(\mathbf{M}\)</p>
-<p>$$ M_{t} = \lambda \mathbf{M_{t-1}} + {\mathbf{x}}_{t}^T {\mathbf{x}}_{t}$$</p>
-<p>Then, you update the parameters \(\mathbf{\beta}\) with the new \(\mathbf{M}\) matrix. This is where Newton-Raphson enters the picture.</p>
-<p>$$ \mathbf{\beta}_{t} = \mathbf{\beta}_{t-1} + \mathbf{M}_{t}^{-1}{\mathbf{x}}_{t} \mathbf{\epsilon_{t}}$$</p>
-<p>Now, we have our update step.</p>
-<h1>turning it into a market </h1>
+\mathbf{m_t}\), with \(\mathbf{M_0}=\mathbf{M}_{init}\). We're not going to update it exactly like that, since this would retain all former information at every update. We actually want to forget some information, since we want our regression to adapt to a changing underlying distribution. So we'll introduce a *memory factor*, \(\lambda\) (note that this memory factor is confusingly known as the *forgetting rate* in the Pinson paper). Then, we'll perform the update as$$\mathbf{M_t} = \lambda \mathbf{M_{t-1}} + \mathbf{m_t}$$</p>
+<p>For the full update, we'll actually perform something know as <a href="https://en.wikipedia.org/wiki/Newton%27s_method" target="_blank">Newton-Raphson</a>, since there is no simple way like this to update the parameters \(\mathbf{\beta}\). This will also allow us to minimize other loss functions than the sum of square residuals (see the Pinson paper if this interests you). The full update goes as follows:</p><p>First, you calculate the residuals$$\mathbf{\epsilon_{t}} = y_t - \mathbf{\beta}^T_{t-1}{\mathbf{x}}_{t}$$</p>
+<p>Then, you update the matrix \(\mathbf{M}\)$$ M_{t} = \lambda \mathbf{M_{t-1}} + {\mathbf{x}}_{t}^T {\mathbf{x}}_{t}$$</p>
+<p>Then, you update the parameters \(\mathbf{\beta}\) with the new \(\mathbf{M}\) matrix. This is where Newton-Raphson enters the picture.$$ \mathbf{\beta}_{t} = \mathbf{\beta}_{t-1} + \mathbf{M}_{t}^{-1}{\mathbf{x}}_{t} \mathbf{\epsilon_{t}}$$</p>
+<p>Now, we have our update step.<h1>turning it into a market </h1></p>
 <p>So, now we can perform an online linear regression, and we can go and create a market from it. As mentioned, we'll
 follow the recipe provided by the Pinson paper. We'll create a single-buyer
 multiple-seller market, where the single buyer is denoted the "Central agent", and the set of all features is known as
-the "Grand Coalition", or \(\Omega\). </p>
-<p>The paper allocates payment based on an estimator of the loss. For a certain group of features \(\omega\), the loss
+the "Grand Coalition", or \(\Omega\). </p><p>The paper allocates payment based on an estimator of the loss. For a certain group of features \(\omega\), the loss
 estimate is denoted \(L_{\omega}\). The difference between loss estimates can be used as an estimate for how much adding
-a feature reduces the loss of the method. The loss estimators are calculated as:</p>
-<p>$$
+a feature reduces the loss of the method. The loss estimators are calculated as:$$
   L_{\omega,t}^* = \lambda L_{\omega,t-1}^*(\beta_\omega) + \frac{1}{n_\lambda} l_{\omega,t}(\beta_\omega)
 $$</p>
 <p>Where \(l_{\omega,t}(\beta_\omega)\) is the loss function for the group of features \(\omega\) at the given time step
-with coefficients \(\beta_\omega\), and \(n_\lambda = \frac{1}{1-\lambda}\). \(n_\lambda\) comes from the equation</p>
-<p>$$
+with coefficients \(\beta_\omega\), and \(n_\lambda = \frac{1}{1-\lambda}\). \(n_\lambda\) comes from the equation$$
   \sum_{k=0}^\infty C \lambda^k = \frac{1}{1-\lambda} C
 $$</p>
-<p>This says something about when you're repeatedly updating a value like we do \(\mathbf{M}\) above. If we had a scalar value \(b_t\), and every step updated it as \(b_t = \lambda b_t + C\), then \(b_t\) would converge to \(\frac{1}{1-\lambda} C=n_\lambda C\) as \(t\) goes to infinity. This means that if we scale everything down to the scale \(\frac{1}{n_\lambda}\) before adding it, the "scale" of our values will converge to 1. </p>
-<p>So, loss estimates are a form of running
+<p>This says something about when you're repeatedly updating a value like we do \(\mathbf{M}\) above. If we had a scalar value \(b_t\), and every step updated it as \(b_t = \lambda b_t + C\), then \(b_t\) would converge to \(\frac{1}{1-\lambda} C=n_\lambda C\) as \(t\) goes to infinity. This means that if we scale everything down to the scale \(\frac{1}{n_\lambda}\) before adding it, the "scale" of our values will converge to 1. </p><p>So, loss estimates are a form of running
 average of the loss of the regression when using a certain group of features. I only calculate the loss estimates
 out-of-sample, since I find it sensible for a data user to only be willing to pay for out-of-sample performance. The
-paper also touches on payment for in-sample performance, though.</p>
-<p>We want to determine how much to pay each feature now. We can use the loss estimate as the payout of the group of
+paper also touches on payment for in-sample performance, though.</p><p>We want to determine how much to pay each feature now. We can use the loss estimate as the payout of the group of
 features seen as a coalition from cooperative game theory (see my last blog post), and thus determine the shapley values
 of each feature. Then, we can determine payment based on the shapley values. The payment fraction \(\pi_{k,t}\) for
-feature \(k\) and time step \(t\) will be denoted \(psi_{k,t}\)  </p>
-<p>$$\pi_{k,t} = (L_{\omega, i}^*- L_{\Omega}^* ) \phi_i \psi_{k,t}(l) $$</p>
-<p>\(\pi_{k,t}\) is the payment to feature \(k\) at time \(t\). \(L^<i>\)s are loss
-estimators, \(L^</i>_{\omega,i}\) for the central agent and \(L_{\Omega}^</p>
-
-<h1>an online market</h1>
+feature \(k\) and time step \(t\) will be denoted \(psi_{k,t}\)  $$\pi_{k,t} = (L_{\omega, i}^*- L_{\Omega}^* ) \phi_i \psi_{k,t}(l) $$</p>
+<p>\(\pi_{k,t}\) is the payment to feature \(k\) at time \(t\). \(L^*\)s are loss
+estimators, \(L^*_{\omega,i}\) for the central agent and \(L_{\Omega}^*\) for
+the grand coalition. \(\psi_{k,t}\) is the payment allocation to the grand
+coalition. \(\phi_i\) is the willingness of the central agent to pay for
+improving the value of the loss function \(l\)<h1>an online market</h1></p>
 <p>Usually, my demos are mostly focused on the gain for the person using the
 market. This time, I want to show off some of the nitty-gritty parts of the
 algorithm. Let's imagine that you're a rental bike provider. The dataset is
@@ -139,19 +114,15 @@ bike you're off from the true demand, it costs you 5€, in missed rides or
 oversupply or something similar. You don't have any data available yourself to
 predict these bike demands, so you go to the market and look, trying to predict
 the amount of needed rental bikes in an online fashion, since you think there's
-probably a change over time in the effect of different features in the market.</p>
-<p>You will be paying with a payment willingness of 1€ for every 1 reduction in
+probably a change over time in the effect of different features in the market.</p><p>You will be paying with a payment willingness of 1€ for every 1 reduction in
 the RMSE. This will let you make a good profit on forecasting improvements from
-market features. </p>
-<p>The demo this time also shows the inner workings of the algorithm. The central parts of the online linear regression are
+market features. </p><p>The demo this time also shows the inner workings of the algorithm. The central parts of the online linear regression are
 the \(M\) matrix and the \(\beta\) vector, which is the vector of coefficients. The \(M\) matrix is updated every
 iteration based on the new observation, and the vector of coefficients \(\beta\) is then updated based on the new \(M\)
 matrix and the current residuals. To calculate the observational shapley values, there are actually more regressions
 running parallel to the true regression, which are only used to calculate the loss estimators discussed earlier.  The
 market doesn't guarantee that you'll always save at every time step, since I only look at out-of-sample predictions, but
-it does guarantee it over the long run.</p>
-<p>Press the "Next day" button to advance the simulation and fill out the tables below!</p>
-<p> <table>
+it does guarantee it over the long run.</p><p>Press the "Next day" button to advance the simulation and fill out the tables below!</p><p> <table>
   <tr>
   <td>M Matrix</td> <td> </td> <td></td> <td></td> <td> </td>
   </tr>
@@ -167,9 +138,7 @@ it does guarantee it over the long run.</p>
   <tr>
     <td> </td><td id="M-4-1"></td><td id="M-4-2"></td><td id="M-4-3"></td><td id="M-4-4"></td>
   </tr>
-</table></p>
-
-<p><table>
+</table></p><p><table>
   <tr>
     <td></td><td>Constant</td><td>Precipitation</td><td>Wind Speed</td><td>Temperature</td>
   </tr>
@@ -185,8 +154,7 @@ it does guarantee it over the long run.</p>
   <tr>
     <td>Payments</td> <td id="payment1"></td><td id="payment2"></td><td id="payment3"></td><td id="payment4"></td>
   </tr>
-</table></p>
-<p><table>
+</table></p><p><table>
 <tr><th colspan="4">Info</th></tr>
 <tr><td>True value of y </td> <td id="true-y"> </td></tr>
 <tr><td>Prediction with no market features </td> <td id="central-agent-pred"></td> <td>Error</td><td id="central-agent-loss"></td></tr>
@@ -196,28 +164,18 @@ it does guarantee it over the long run.</p>
 <tr><td>Money spent on bike management without market</td> <td id="err-cost-central-agent"></td></tr>
 <tr><td>Net savings from using market </td><td id="profit"></td></tr>
 <tr><td>Avg. net savings from using market </td> <td id="avg-profit"></td></tr>
-</table></p>
-
-<p><button type="button" onclick="time_step()">Next day</button>
-<p id="date">Day #0</p></p>
-<p>You'll find that since the underlying distribution changes over time, so too do the coefficients, which allows the
+</table></p><p><button type="button" onclick="time_step()">Next day</button>
+<p id="date">Day #0</p></p><p>You'll find that since the underlying distribution changes over time, so too do the coefficients, which allows the
 regression to stay up to date with the changing distribution. The market saves you money. You can also investigate how
 the M matrix and the coefficients update every iteration. Online regression can make a lot of sense when distributions
 change over time, instead of bach inference and prediction based on this batch. Many real-world phenomenon do change
-over time, like this situation with consumer demand. This is where online regression can come in very useful.</p>
-
-
-<h1>conclusion</h1>
-<p>So, we can construct a market not just with batch learning, but also using online machine learning. These methods allow us to update our regression method as new data becomes available to us, which is a very nice property. For my next post, I'll tackle the OCDS<sup id="ref-home-2"><a href="#ref-2">2</a></sup> algorithm and missing data in online machine learning. Thanks for reading! </p>
-
-<p><div style="display:flex;width:100%">
+over time, like this situation with consumer demand. This is where online regression can come in very useful.<h1>conclusion</h1></p>
+<p>So, we can construct a market not just with batch learning, but also using online machine learning. These methods allow us to update our regression method as new data becomes available to us, which is a very nice property. For my next post, I'll tackle the OCDS<sup id="ref-home-2"><a href="#ref-2">2</a></sup> algorithm and missing data in online machine learning. Thanks for reading! </p><p><div style="display:flex;width:100%">
  <div style="flex:1;margin:10px;text-align:left;">  
  <a href="2023-12-10-revenue-distribution.html"> &#171; data markets IV: revenue distribution</a>
  </div>
  <div style="flex:1;margin:10px;text-align:right">
  <a href="2025-08-02-thesis-results-i.html"> thesis results I: online regression &#187; </a>
  </div>
-</div></p>
-
-<h1>references</h1>
+</div><h1>references</h1></p>
 </div></body></html>
