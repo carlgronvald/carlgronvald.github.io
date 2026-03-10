@@ -201,3 +201,6 @@ hr {
     line-height:100%;
   }
 }
+.inline-code {
+  font-family: monospace, monospace;
+}
